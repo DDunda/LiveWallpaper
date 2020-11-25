@@ -139,16 +139,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Image Include="ball.bmp" />
-  </ItemGroup>
-  <ItemGroup>
+    <ClInclude Include="DrawingHelpers.h" />
+    <ClInclude Include="Renderer.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -24,7 +24,43 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
 // Bitmap
 //
 
-IDB_BALL                BITMAP                  "ball.bmp"
+IDB_BG                  BITMAP                  "background.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON                ICON                    "icon.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDC_CONTEXTMENU MENU
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "Exit",                        ID__EXIT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_TITLE               "LiveWallpaper"
+    IDS_TOOLTIP             "Clouds Wallpaper"
+END
 
 #endif    // English (United Kingdom) resources
 /////////////////////////////////////////////////////////////////////////////
