@@ -6,7 +6,7 @@ Renderer::Renderer(HDC wDC) {
 	delta = current = previous = 0;
 
 	// 60 60ths of a second adds to a second - 60fps
-	minDeltaD = milliseconds(1000 / 60);
+	minDeltaD = nanoseconds(1000000000 / 60);
 	currentTP = SC::now();
 
 	BG = new bitmap(IDB_BG, workerDC);
@@ -22,7 +22,7 @@ Renderer::Renderer(HDC wDC) {
 		0
 	};
 
-	clouds1 = new Cloud(11.3, 105, 624);
+	clouds1 = new Cloud(11.25, 105, 624);
 	clouds2 = new Cloud(22.5, 69, 729);
 	clouds3 = new Cloud(45, 93, 798);
 	clouds4 = new Cloud(90, 189, 891);
