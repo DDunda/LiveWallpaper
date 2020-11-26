@@ -26,6 +26,12 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
 
 IDB_BG                  BITMAP                  "background.bmp"
 
+IDB_DRAGON              BITMAP                  "dragon.bmp"
+
+IDB_BALLROG             BITMAP                  "Ballrog.bmp"
+
+IDB_HELICOPTER          BITMAP                  "Helicopter.bmp"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -46,6 +52,9 @@ IDC_CONTEXTMENU MENU
 BEGIN
     POPUP ""
     BEGIN
+        MENUITEM "Toggle visitors (Enabled)",   ID__VISITORS
+        MENUITEM "Force visit",                 ID__FORCEVISIT
+        MENUITEM SEPARATOR
         MENUITEM "Exit",                        ID__EXIT
     END
 END
@@ -60,6 +69,8 @@ STRINGTABLE
 BEGIN
     IDS_TITLE               "LiveWallpaper"
     IDS_TOOLTIP             "Clouds Wallpaper"
+    IDS_TOGGLE_DISABLED     "Toggle visitors (Disabled)"
+    IDS_TOGGLE_ENABLED      "Toggle visitors (Enabled) "
 END
 
 #endif    // English (United Kingdom) resources

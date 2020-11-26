@@ -3,13 +3,27 @@
 Renderer::Renderer(HDC wDC) {
 	workerDC = wDC;
 
+	renderDC = CreateCompatibleDC(workerDC);
+	renderBuffer = CreateCompatibleBitmap(
+		workerDC,
+		1920,
+		1080
+	);
+	SelectObject(renderDC, renderBuffer);
+
 	delta = current = previous = 0;
 
 	// 60 60ths of a second adds to a second - 60fps
 	minDeltaD = nanoseconds(1000000000 / 60);
 	currentTP = SC::now();
+	previousTP = currentTP;
 
-	BG = new bitmap(IDB_BG, workerDC);
+	current = duration_cast<milliseconds>(currentTP.time_since_epoch()).count() / 1000.0;
+	previous = current;
+
+	srand(current);
+
+	BG = new bitmap(IDB_BG, renderDC);
 
 	starDst = {
 		0,
@@ -26,6 +40,8 @@ Renderer::Renderer(HDC wDC) {
 	clouds2 = new Cloud(22.5, 69, 729);
 	clouds3 = new Cloud(45, 93, 798);
 	clouds4 = new Cloud(90, 189, 891);
+
+	visitors = new VisitorManager(renderDC);
 }
 
 Renderer::~Renderer() {
@@ -54,8 +70,6 @@ void Renderer::HandleTime() {
 }
 
 void Renderer::RenderLoop() {
-	// Draw stars (only needs a single draw)
-	BG->blit(starDst, starSrc);
 
 	while (Window::running) {
 		// Moves clouds left
@@ -64,11 +78,33 @@ void Renderer::RenderLoop() {
 		clouds3->Move(delta);
 		clouds4->Move(delta);
 
+
+		// Draw stars
+		BG->blit(starDst, starSrc);
+
 		// Draw clouds
 		clouds1->Draw(BG);
 		clouds2->Draw(BG);
 		clouds3->Draw(BG);
 		clouds4->Draw(BG);
+
+		// Draw visitors
+		if (Window::visitorsToggled) {
+			visitors->Update(delta);
+			visitors->Draw();
+		}
+
+		BitBlt(
+			workerDC,
+			0,
+			0,
+			1920,
+			1080,
+			renderDC,
+			0,
+			0,
+			SRCCOPY
+		);
 
 		// Keep track of time to do animations
 		HandleTime();

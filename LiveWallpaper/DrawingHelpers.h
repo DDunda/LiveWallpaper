@@ -1,6 +1,7 @@
 #pragma once
 
 #include<Windows.h>
+#include<wingdi.h>
 #include<string>
 
 struct point {
@@ -50,6 +51,23 @@ public:
 			src.x,
 			src.y,
 			SRCCOPY
+		);
+	}
+	void tBlit(rect dst, rect src, int key) {
+		TransparentBlt(
+			target,
+			dst.x,
+			dst.y,
+			dst.w,
+			dst.h,
+
+			hdcMem,
+			src.x,
+			src.y,
+			src.w,
+			src.h,
+
+			key
 		);
 	}
 };

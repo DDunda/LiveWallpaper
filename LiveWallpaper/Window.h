@@ -17,6 +17,8 @@ public:
 	static const WCHAR* className;
 	static WCHAR* titleName;
 	static bool running;
+	static bool visitorsToggled;
+	static bool forceVisitor;
 
 	// Creates the window
 	static void MakeWindow(HINSTANCE instance);

@@ -14,9 +14,17 @@ LRESULT CALLBACK Window::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 	case WM_COMMAND:
 		// User selected the quit button
-		if (LOWORD(wParam) == ID__EXIT) {
+		switch (LOWORD(wParam)) {
+		case ID__EXIT:
 			DestroyWindow(hwnd);
 			PostQuitMessage(0);
+			break;
+		case ID__VISITORS:
+			visitorsToggled = !visitorsToggled;
+			break;
+		case ID__FORCEVISIT:
+			visitorsToggled = true;
+			forceVisitor = true;
 			break;
 		} // Continue otherwise...
 
@@ -123,6 +131,20 @@ void Window::ShowContextMenu(HWND hwnd, point pt) {
 	if (hMenu) {
 		HMENU hSubMenu = GetSubMenu(hMenu, 0);
 		if (hSubMenu) {
+			WCHAR strMenuString[27];
+			WCHAR tmp[27];
+			GetMenuString(hSubMenu, ID__VISITORS, strMenuString, 27, MF_BYCOMMAND);
+			LoadString(hInst, IDS_TOGGLE_DISABLED, tmp, 27);
+			if(visitorsToggled) {
+				LoadString(hInst, IDS_TOGGLE_ENABLED, strMenuString, 27);
+			}
+			else
+			{
+				LoadString(hInst, IDS_TOGGLE_DISABLED, strMenuString, 27);
+			}
+
+			BOOL bChanged = ModifyMenu(hSubMenu, ID__VISITORS, MF_BYCOMMAND | MF_STRING, ID__VISITORS, (LPCTSTR)strMenuString);
+
 			// The window must be foreground before calling TrackPopupMenu or the menu will not disappear when the user clicks away
 			SetForegroundWindow(hwnd);
 
@@ -146,3 +168,5 @@ HINSTANCE Window::hInst = NULL;
 WCHAR* Window::titleName = 0;
 HWND Window::hwnd = 0;
 bool Window::running = false;
+bool Window::visitorsToggled = true;
+bool Window::forceVisitor = false;

@@ -44,4 +44,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="dragon.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="background.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Ballrog.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Helicopter.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
 </Project>
