@@ -490,7 +490,7 @@ public:
 			if (!currentVisitor->Update(delta)) {
 				currentVisitor->Despawn();
 				currentVisitor = NULL;
-				appearanceCountdown = ((rand() + 1) % 11) * 60; // Appears consequent times every 1-10 minutes
+				appearanceCountdown = ((rand() % 6) + 5) * 60; // Appears consequent times every 5-10 minutes
 			}
 		}
 		else {
