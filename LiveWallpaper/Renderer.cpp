@@ -1,13 +1,60 @@
 #include"Renderer.h"
 
+// Cloud layers
+Cloud::Cloud(double _v, int h, int y) {
+	sectionWidth = 320 * Renderer::scale;
+	x = sectionWidth;
+	v = _v * Renderer::scale;
+	dst = {
+		0,
+		y * Renderer::scale,
+		320 * Renderer::scale,
+		h * Renderer::scale
+	};
+	src = {
+		0,
+		y,
+		320,
+		h
+	};
+}
+
+void Cloud::DrawPart(bitmap* BG, int o) {
+	dst.x = (int)round(x + o);
+	BG->blit(dst, src);
+}
+
+void Cloud::Update(double delta) {
+	x -= v * delta;
+	// Wraps to the right once the leftmost cloud part is completely off the screen
+	while (x <= 0) x += sectionWidth;
+}
+void Cloud::Render(bitmap* BG) {
+	DrawPart(BG, -sectionWidth);
+	DrawPart(BG, 0);
+	DrawPart(BG, sectionWidth);
+}
+
 Renderer::Renderer(HDC wDC) {
+	resolution = GetScreenSize();
+
+	int xScale = ceil(resolution.x / 640.0);
+	int yScale = ceil(resolution.y / 360.0);
+
+	scale = xScale > yScale ? xScale : yScale;
+
+	fakeResolution = { 0, 0, scale * 640, scale * 360 };
+
+	fakeResolution.x = resolution.x - fakeResolution.w;
+	fakeResolution.y = resolution.y - fakeResolution.h;
+
 	workerDC = wDC;
 
 	renderDC = CreateCompatibleDC(workerDC);
 	renderBuffer = CreateCompatibleBitmap(
 		workerDC,
-		1920,
-		1080
+		fakeResolution.w,
+		fakeResolution.h
 	);
 	SelectObject(renderDC, renderBuffer);
 
@@ -28,22 +75,23 @@ Renderer::Renderer(HDC wDC) {
 	starDst = {
 		0,
 		0,
-		BG->info.bmWidth,
-		624
+		640 * scale,
+		208 * scale
 	};
 	starSrc = {
 		0,
-		0
+		0,
+		640,
+		208
 	};
 
-	clouds1 = new Cloud(11.25, 105, 624);
-	clouds2 = new Cloud(22.5, 69, 729);
-	clouds3 = new Cloud(45, 93, 798);
-	clouds4 = new Cloud(90, 189, 891);
+	clouds1 = new Cloud(3.75, 35, 208);
+	clouds2 = new Cloud(7.5, 23, 243);
+	clouds3 = new Cloud(15, 31, 266);
+	clouds4 = new Cloud(30, 63, 297);
 
 	visitors = new VisitorManager(renderDC);
 }
-
 Renderer::~Renderer() {
 	delete BG;
 	DeleteDC(workerDC);
@@ -73,33 +121,33 @@ void Renderer::RenderLoop() {
 
 	while (Window::running) {
 		// Moves clouds left
-		clouds1->Move(delta);
-		clouds2->Move(delta);
-		clouds3->Move(delta);
-		clouds4->Move(delta);
+		clouds1->Update(delta);
+		clouds2->Update(delta);
+		clouds3->Update(delta);
+		clouds4->Update(delta);
 
 
 		// Draw stars
 		BG->blit(starDst, starSrc);
 
 		// Draw clouds
-		clouds1->Draw(BG);
-		clouds2->Draw(BG);
-		clouds3->Draw(BG);
-		clouds4->Draw(BG);
+		clouds1->Render(BG);
+		clouds2->Render(BG);
+		clouds3->Render(BG);
+		clouds4->Render(BG);
 
 		// Draw visitors
 		if (Window::visitorsToggled) {
 			visitors->Update(delta);
-			visitors->Draw();
+			visitors->Render();
 		}
 
 		BitBlt(
 			workerDC,
-			0,
-			0,
-			1920,
-			1080,
+			fakeResolution.x,
+			fakeResolution.y,
+			fakeResolution.w,
+			fakeResolution.h,
 			renderDC,
 			0,
 			0,
@@ -110,3 +158,5 @@ void Renderer::RenderLoop() {
 		HandleTime();
 	}
 }
+
+int Renderer::scale = 0;

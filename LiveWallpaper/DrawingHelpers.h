@@ -12,6 +12,8 @@ struct rect {
 	int x, y, w, h;
 };
 
+point GetScreenSize();
+
 // Wrapper for a WinGDI bitmap, because it's awful to directly use win32
 class bitmap {
 public:
@@ -21,53 +23,13 @@ public:
 	HGDIOBJ infoOld;
 	HDC target;
 
-	bitmap(int bitmapCode, HDC dc) {
-		target = dc;
-		image = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(bitmapCode));
-		if (image == NULL) {
-			std::string errorMessage = "Bitmap \"" + std::to_string(bitmapCode) + "\"could not be opened";
-			throw std::exception(errorMessage.c_str());
-		}
-		hdcMem = CreateCompatibleDC(target);
-		infoOld = SelectObject(hdcMem, image);
-		GetObject(image, sizeof(info), &info);
-	}
+	bitmap(int bitmapCode, HDC dc);
+	~bitmap();
 
-	~bitmap() {
-		SelectObject(hdcMem, infoOld);
-		DeleteDC(hdcMem);
-		DeleteObject(image);
-	}
-
-	void blit(rect dst, point src) {
-		BitBlt(
-			target,
-			dst.x,
-			dst.y,
-			dst.w,
-			dst.h,
-
-			hdcMem,
-			src.x,
-			src.y,
-			SRCCOPY
-		);
-	}
-	void tBlit(rect dst, rect src, int key) {
-		TransparentBlt(
-			target,
-			dst.x,
-			dst.y,
-			dst.w,
-			dst.h,
-
-			hdcMem,
-			src.x,
-			src.y,
-			src.w,
-			src.h,
-
-			key
-		);
-	}
+	// Blit: blit with potential scaling (mapping rect to potentially different rect)
+	void blit(rect dst, rect src);
+	// Raw blit: a direct copy with no stretching (mapping rect to same rect)
+	void rBblit(rect dst, rect src);
+	// Transparent blit: blit with stretching, and transparency through colour keying
+	void tBlit(rect dst, rect src, int key);
 };
