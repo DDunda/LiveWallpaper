@@ -73,6 +73,8 @@ void SpawnRenderer() {
 // For some reason Windows thinks this is a reasonable entry point
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int) {
 
+	SetProcessDPIAware();
+
 	// Initialises stuff for a static window class, an object isn't actually created.
 	Window::MakeWindow(hInstance);
 

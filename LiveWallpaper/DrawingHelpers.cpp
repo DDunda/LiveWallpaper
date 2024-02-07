@@ -2,8 +2,8 @@
 
 point GetScreenSize() {
 	return {
-		GetSystemMetrics(SM_CXSCREEN),
-		GetSystemMetrics(SM_CYSCREEN)
+		GetSystemMetricsForDpi(SM_CXSCREEN, 96),
+		GetSystemMetricsForDpi(SM_CYSCREEN, 96)
 	};
 }
 
