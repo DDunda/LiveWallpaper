@@ -24,31 +24,38 @@ void Blinker::Update(double delta) {
 // Dragon visitor
 Dragon::Dragon(HDC dc) {
 	speed = 30 * Renderer::scale;
-	xVariance = 6.5 * Renderer::scale;
-	yVariance = 16 * Renderer::scale;
-	flapCycle = xCyle = yCyle = 0;
-	frame = false; // Frame 1
+	flapCycle = xCycle = yCycle = 0.0;
+	frame = FLAP_UP; // Frame 1
 	dragon = new bitmap(IDB_DRAGON, dc);
 }
 
-void Dragon::Spawn() {
-	x = -xVariance - 40 * Renderer::scale; // Offscreen - to left
+Dragon::~Dragon()
+{
+	if (dragon != nullptr) delete dragon;
+	dragon = nullptr;
+}
+
+void Dragon::Spawn()
+{
+	x = -(X_RADIUS + 40.0) * Renderer::scale; // Offscreen - to left
 	holdingSue = (rand() % 2) == 1;
 	if (holdingSue) x -= 3 * Renderer::scale;
 }
-void Dragon::Despawn() {
 
-}
+void Dragon::Despawn() { }
 
-void Dragon::DrawDragon(point p) {
-	rect src{
-		frame ? 40 : 0,
+void Dragon::DrawDragon(point p)
+{
+	rect src
+	{
+		frame == FLAP_DOWN ? 40 : 0,
 		0,
 		40,
 		36
 	};
 
-	rect dst{
+	rect dst
+	{
 		p.x,
 		p.y,
 		40 * Renderer::scale,
@@ -57,15 +64,18 @@ void Dragon::DrawDragon(point p) {
 
 	dragon->tBlit(dst, src, 0);
 }
-void Dragon::DrawSue(point p) {
-	rect src{
+void Dragon::DrawSue(point p)
+{
+	rect src
+	{
 		80,
 		0,
 		16,
 		16
 	};
 
-	rect dst{
+	rect dst
+	{
 		p.x + 27 * Renderer::scale,
 		p.y + 24 * Renderer::scale,
 		16 * Renderer::scale,
@@ -75,124 +85,154 @@ void Dragon::DrawSue(point p) {
 	dragon->tBlit(dst, src, 0);
 }
 
-bool Dragon::Update(double delta) {
+bool Dragon::Update(double delta)
+{
 	x += speed * delta;
 
-	flapCycle += flapFreq * delta;
-	xCyle += xFreq * delta;
-	yCyle += yFreq * delta;
-	while (flapCycle >= 1) {
-		flapCycle--;
+	flapCycle += FLAP_RATE * delta;
+	xCycle += X_RATE * delta;
+	yCycle += Y_RATE * delta;
+
+	while (flapCycle >= 1.0)
+	{
+		flapCycle -= 1.0;
 		frame = !frame;
 	}
-	while (xCyle >= 1) xCyle--;
-	while (yCyle >= 1) yCyle--;
 
-	return x - xVariance < 640 * Renderer::scale;
+	// Restrict to [0.0, 1.0) range
+	while (xCycle >= 1.0) xCycle -= 1.0;
+	while (yCycle >= 1.0) yCycle -= 1.0;
+
+	return x - X_RADIUS * Renderer::scale < Renderer::resolution.x;
 }
-void Dragon::Render() {
-	point p = {
-		x + xVariance * sin(xCyle * 2 * M_PI),
-		220 * Renderer::scale + yVariance * sin(yCyle * 2 * M_PI)
+void Dragon::Render()
+{
+	point p =
+	{
+		(int)round( x     + X_RADIUS * sin(xCycle * 2.0 * M_PI)  * Renderer::scale),
+		(int)round((220.0 + Y_RADIUS * sin(yCycle * 2.0 * M_PI)) * Renderer::scale)
 	};
 	DrawDragon(p);
 	if (holdingSue) DrawSue(p);
 }
 
-// Ballrog visitor
-Ballrog::Ballrog(HDC dc) {
+// Balrog visitor
+Balrog::Balrog(HDC dc)
+{
 	speed = 30 * Renderer::scale;
-	xVariance = 6.5 * Renderer::scale;
-	yVariance = 16 * Renderer::scale;
-	flapCycle = xCyle = yCyle = 0;
+	flapCycle = xCycle = yCycle = 0;
 	frame = false; // Frame 1
-	ballrog = new bitmap(IDB_BALLROG, dc);
+	balrog = new bitmap(IDB_BALROG, dc);
 }
 
-void Ballrog::Spawn() {
-	x = -xVariance - 39 * Renderer::scale; // Offscreen - to left
+Balrog::~Balrog()
+{
+	if (balrog != nullptr) delete balrog;
+	balrog = nullptr;
 }
-void Ballrog::Despawn() {
 
+void Balrog::Spawn()
+{
+	x = -(X_RADIUS + 39.0) * Renderer::scale; // Offscreen - to left
 }
+void Balrog::Despawn() { }
 
-bool Ballrog::Update(double delta) {
+bool Balrog::Update(double delta)
+{
 	x += speed * delta;
 
-	flapCycle += flapFreq * delta;
-	xCyle += xFreq * delta;
-	yCyle += yFreq * delta;
-	while (flapCycle >= 1) {
-		flapCycle--;
+	flapCycle += FLAP_RATE * delta;
+	xCycle += X_RATE * delta;
+	yCycle += Y_RATE * delta;
+
+	while (flapCycle >= 1.0)
+	{
+		flapCycle -= 1.0;
 		frame = !frame;
 	}
-	while (xCyle >= 1) xCyle--;
-	while (yCyle >= 1) yCyle--;
 
-	return x - xVariance < 640 * Renderer::scale;
+	while (xCycle >= 1.0) xCycle -= 1.0;
+	while (yCycle >= 1.0) yCycle -= 1.0;
+
+	return x - X_RADIUS * Renderer::scale < Renderer::resolution.x;
 }
-void Ballrog::Render() {
-	rect src{
-		frame ? 39 : 0,
+void Balrog::Render()
+{
+	rect src
+	{
+		frame == FLAP_DOWN ? 39 : 0,
 		0,
 		39,
 		36,
 	};
 
-	rect dst{
-		x + xVariance * sin(xCyle * 2 * M_PI),
-		220 * Renderer::scale + yVariance * sin(yCyle * 2 * M_PI),
+	rect dst
+	{
+		(int)round( x     + X_RADIUS * sin(xCycle * 2.0 * M_PI)  * Renderer::scale),
+		(int)round((220.0 + Y_RADIUS * sin(yCycle * 2.0 * M_PI)) * Renderer::scale),
 		39 * Renderer::scale,
 		36 * Renderer::scale
 	};
 
-	ballrog->tBlit(dst, src, 0);
+	balrog->tBlit(dst, src, 0);
 }
 
 // Helicopter visitor
-Helicopter::Helicopter(HDC dc) {
+Helicopter::Helicopter(HDC dc)
+{
 	speed = 30 * Renderer::scale;
-	xVariance = 6.5 / 4.0 * Renderer::scale;
-	yVariance = 16 / 4.0 * Renderer::scale;
-	propellerCycle = xCyle = yCyle = 0;
+	propellerCycle = xCycle = yCycle = 0;
 	propellerFrame = 0;
 	helicopter = new bitmap(IDB_HELICOPTER, dc);
 }
 
-void Helicopter::Spawn() {
-	x = -xVariance - 142 * Renderer::scale; // Offscreen - to left
+Helicopter::~Helicopter()
+{
+	if (helicopter != nullptr) delete helicopter;
+	helicopter = nullptr;
 }
-void Helicopter::Despawn() {
 
+void Helicopter::Spawn()
+{
+	x = -(X_RADIUS + 142.0) * Renderer::scale; // Offscreen - to left
 }
+void Helicopter::Despawn() { }
 
-void Helicopter::DrawHelicopterBase(point p) {
-	rect src{
+void Helicopter::DrawHelicopterBase(point p)
+{
+	rect src
+	{
 		0,
 		84,
 		126,
 		59
 	};
 
-	rect dst{
-		p.x + 5 * Renderer::scale,
+	rect dst
+	{
+		p.x +  5 * Renderer::scale,
 		p.y + 13 * Renderer::scale,
 		126 * Renderer::scale,
-		59 * Renderer::scale
+		 59 * Renderer::scale
 	};
 
 	helicopter->tBlit(dst, src, 0);
 }
-void Helicopter::DrawPropeller1(point p) {
+
+void Helicopter::DrawPropeller1(point p)
+{
 	int i = propellerFrame == 3 ? 2 : propellerFrame;
-	rect src{
+
+	rect src
+	{
 		0,
 		14 * i,
 		70,
 		14
 	};
 
-	rect dst{
+	rect dst
+	{
 		p.x,
 		p.y + 5 * Renderer::scale,
 		70 * Renderer::scale,
@@ -201,16 +241,21 @@ void Helicopter::DrawPropeller1(point p) {
 
 	helicopter->tBlit(dst, src, 0);
 }
-void Helicopter::DrawPropeller2(point p) {
+
+void Helicopter::DrawPropeller2(point p)
+{
 	int i = propellerFrame == 3 ? 2 : propellerFrame;
-	rect src{
+
+	rect src
+	{
 		0,
 		42 + 14 * i,
 		112,
 		14
 	};
 
-	rect dst{
+	rect dst
+	{
 		p.x + 30 * Renderer::scale,
 		p.y,
 		112 * Renderer::scale,
@@ -219,16 +264,21 @@ void Helicopter::DrawPropeller2(point p) {
 
 	helicopter->tBlit(dst, src, 0);
 }
-void Helicopter::DrawBlinks(point p) {
-	if (ChakoBlinker.blinking) {
-		rect src{
+
+void Helicopter::DrawBlinks(point p)
+{
+	if (ChakoBlinker.blinking)
+	{
+		rect src
+		{
 			118,
 			2,
 			8,
 			3
 		};
 
-		rect dst{
+		rect dst
+		{
 			p.x + 28 * Renderer::scale,
 			p.y + 46 * Renderer::scale,
 			7 * Renderer::scale,
@@ -237,15 +287,19 @@ void Helicopter::DrawBlinks(point p) {
 
 		helicopter->tBlit(dst, src, 0);
 	}
-	if (SantaBlinker.blinking) {
-		rect src{
+
+	if (SantaBlinker.blinking)
+	{
+		rect src
+		{
 			117,
 			0,
 			9,
 			2
 		};
 
-		rect dst{
+		rect dst
+		{
 			p.x + 40 * Renderer::scale,
 			p.y + 47 * Renderer::scale,
 			9 * Renderer::scale,
@@ -254,15 +308,19 @@ void Helicopter::DrawBlinks(point p) {
 
 		helicopter->tBlit(dst, src, 0);
 	}
-	if (MomorinBlinker.blinking) {
-		rect src{
+
+	if (MomorinBlinker.blinking)
+	{
+		rect src
+		{
 			119,
 			5,
 			7,
 			2
 		};
 
-		rect dst{
+		rect dst
+		{
 			p.x + 54 * Renderer::scale,
 			p.y + 40 * Renderer::scale,
 			7 * Renderer::scale,
@@ -273,30 +331,35 @@ void Helicopter::DrawBlinks(point p) {
 	}
 }
 
-bool Helicopter::Update(double delta) {
+bool Helicopter::Update(double delta)
+{
 	x += speed * delta;
 
-	propellerCycle += propellerFreq * delta;
-	xCyle += xFreq * delta;
-	yCyle += yFreq * delta;
-	while (propellerCycle >= 1) {
-		propellerCycle--;
+	propellerCycle += PROPELLOR_RATE * delta;
+	xCycle += X_RATE * delta;
+	yCycle += Y_RATE * delta;
+
+	while (propellerCycle >= 1.0) {
+		propellerCycle -= 1.0;
 		propellerFrame++;
+		propellerFrame %= 4;
 	}
-	propellerFrame %= 4;
-	while (xCyle >= 1) xCyle--;
-	while (yCyle >= 1) yCyle--;
+
+	while (xCycle >= 1.0) xCycle -= 1.0;
+	while (yCycle >= 1.0) yCycle -= 1.0;
 
 	ChakoBlinker.Update(delta);
 	SantaBlinker.Update(delta);
 	MomorinBlinker.Update(delta);
 
-	return x - xVariance < 640 * Renderer::scale;
+	return x - X_RADIUS * Renderer::scale < Renderer::resolution.x;
 }
-void Helicopter::Render() {
-	point p = {
-		x + xVariance * sin(xCyle * 2 * M_PI),
-		250 * Renderer::scale + yVariance * sin(yCyle * 2 * M_PI)
+void Helicopter::Render()
+{
+	point p =
+	{
+		(int)round( x     + X_RADIUS * sin(xCycle * 2.0 * M_PI) * Renderer::scale),
+		(int)round((250.0 + Y_RADIUS * sin(yCycle * 2.0 * M_PI)) * Renderer::scale)
 	};
 
 	DrawHelicopterBase(p);
@@ -306,35 +369,42 @@ void Helicopter::Render() {
 }
 
 // Visitor manager
-VisitorManager::VisitorManager(HDC dc) {
-	visitors = new Visitor * [] {
+VisitorManager::VisitorManager(HDC dc)
+{
+	visitors = new Visitor*[VISITOR_COUNT] {
 		new Dragon(dc),
-			new Ballrog(dc),
-			new Helicopter(dc)
+		new Balrog(dc),
+		new Helicopter(dc)
 	};
-	visitorCount = 3;
 
 	appearanceCountdown = (rand() % 6) * 60.0; // Appears for the first time somewhere from 0-5 minutes
 }
 
-void VisitorManager::Update(double delta) {
+void VisitorManager::Update(double delta)
+{
+	if (currentVisitor == NULL)
+	{
+		if (appearanceCountdown > 0 && !Window::forceVisitor)
+		{
+			appearanceCountdown -= delta;
+			return;
+		}
 
-	if (currentVisitor == NULL && (appearanceCountdown <= 0 || Window::forceVisitor)) {
-		currentVisitor = visitors[rand() % visitorCount];
+		currentVisitor = visitors[rand() % VISITOR_COUNT];
 		currentVisitor->Spawn();
 		Window::forceVisitor = false;
 	}
-	else if (currentVisitor != NULL) {
-		if (!currentVisitor->Update(delta)) {
-			currentVisitor->Despawn();
-			currentVisitor = NULL;
-			appearanceCountdown = ((rand() % 6) + 5) * 60; // Appears consequent times every 5-10 minutes
-		}
-	}
-	else {
-		appearanceCountdown -= delta;
+	else
+	{
+		if (currentVisitor->Update(delta)) return;
+
+		currentVisitor->Despawn();
+		currentVisitor = NULL;
+		appearanceCountdown = ((rand() % 6) + 5) * 60; // Appears consequent times every 5-10 minutes
 	}
 }
-void VisitorManager::Render() {
+
+void VisitorManager::Render()
+{
 	if (currentVisitor != NULL) currentVisitor->Render();
 }

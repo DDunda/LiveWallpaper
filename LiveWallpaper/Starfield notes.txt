@@ -1,0 +1,27 @@
+Stars in original image
+
+star 1: 7
+star 2: 13
+star 3: 19
+star 4: 21
+star 5: 6
+big star: 6
+
+Area of original starfield without moon: 132,248px
+
+Star densities per million pixels
+
+star 1:    52.93 ( 50 +- 10)
+star 2:    98.30 (100 +- 10)
+star 3:   143.67 (150 +- 10)
+star 4:   158.79 (150 +- 10)
+star 5:    45.37 ( 50 +- 10)
+big star:  45.37 ( 50 +- 10)
+
+
+
+Big star distances: 134, 322, 201, 121, 140, 216, 254 (120 min distance)
+
+Moon position:
+91px from right (put at 50% of width if too thin. unlikely.)
+27px from the bottom (approx 21% of the height; nah, use constant offset)

@@ -1,32 +1,38 @@
 #include "DrawingHelpers.h"
+#include <stdexcept>
 
-point GetScreenSize() {
-	return {
-		GetSystemMetricsForDpi(SM_CXSCREEN, 96),
-		GetSystemMetricsForDpi(SM_CYSCREEN, 96)
+point GetScreenSize()
+{
+	return
+	{
+		GetSystemMetricsForDpi(SM_CXVIRTUALSCREEN, 96),
+		GetSystemMetricsForDpi(SM_CYVIRTUALSCREEN, 96)
 	};
 }
 
-bitmap::bitmap(int bitmapCode, HDC dc) {
+bitmap::bitmap(int bitmapCode, HDC dc)
+{
 	target = dc;
 	image = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(bitmapCode));
-	if (image == NULL) {
-		std::string errorMessage = "Bitmap \"" + std::to_string(bitmapCode) + "\"could not be opened";
-		throw std::exception(errorMessage.c_str());
-	}
+
+	if (image == NULL) throw std::runtime_error("Bitmap \"" + std::to_string(bitmapCode) + "\"could not be opened");
+
 	hdcMem = CreateCompatibleDC(target);
 	infoOld = SelectObject(hdcMem, image);
 	GetObject(image, sizeof(info), &info);
 }
 
-bitmap::~bitmap() {
+bitmap::~bitmap()
+{
 	SelectObject(hdcMem, infoOld);
 	DeleteDC(hdcMem);
 	DeleteObject(image);
 }
 
-void bitmap::blit(rect dst, rect src) {
-	StretchBlt(
+void bitmap::blit(rect dst, rect src)
+{
+	StretchBlt
+	(
 		target,
 		dst.x,
 		dst.y,
@@ -41,8 +47,11 @@ void bitmap::blit(rect dst, rect src) {
 		SRCCOPY
 	);
 }
-void bitmap::rBblit(rect dst, rect src) {
-	BitBlt(
+
+void bitmap::rBblit(rect dst, rect src)
+{
+	BitBlt
+	(
 		target,
 		dst.x,
 		dst.y,
@@ -55,8 +64,11 @@ void bitmap::rBblit(rect dst, rect src) {
 		SRCCOPY
 	);
 }
-void bitmap::tBlit(rect dst, rect src, int key) {
-	TransparentBlt(
+
+void bitmap::tBlit(rect dst, rect src, int key)
+{
+	TransparentBlt
+	(
 		target,
 		dst.x,
 		dst.y,

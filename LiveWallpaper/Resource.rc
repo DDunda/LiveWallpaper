@@ -24,13 +24,17 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
 // Bitmap
 //
 
-IDB_BG                  BITMAP                  "background.bmp"
-
 IDB_DRAGON              BITMAP                  "dragon.bmp"
 
-IDB_BALLROG             BITMAP                  "Ballrog.bmp"
+IDB_BALROG              BITMAP                  "Balrog.bmp"
 
 IDB_HELICOPTER          BITMAP                  "Helicopter.bmp"
+
+IDB_MOON                BITMAP                  "moon.bmp"
+
+IDB_STARS               BITMAP                  "stars.bmp"
+
+IDB_CLOUDS              BITMAP                  "clouds.bmp"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -53,7 +57,7 @@ BEGIN
     POPUP ""
     BEGIN
         MENUITEM "Toggle visitors (Enabled)",   ID__VISITORS
-        MENUITEM "Force visit",                 ID__FORCEVISIT
+        MENUITEM "Invite visitor",              ID__FORCEVISIT
         MENUITEM SEPARATOR
         MENUITEM "Exit",                        ID__EXIT
     END

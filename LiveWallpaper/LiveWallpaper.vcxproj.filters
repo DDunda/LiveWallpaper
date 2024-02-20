@@ -50,7 +50,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Visitors.cpp">
-      <Filter>Resource Files</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -63,10 +63,37 @@
     <Image Include="icon.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="Ballrog.bmp">
+    <Image Include="Helicopter.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="Helicopter.bmp">
+    <Image Include="clouds1.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="clouds2.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="clouds3.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="clouds4.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="moon.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="stars.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bitmap2.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bitmap1.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="clouds.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Balrog.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

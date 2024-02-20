@@ -19,40 +19,45 @@ public:
 	// Return whether onscreen
 	virtual bool Update(double delta) = 0;
 	virtual void Render() = 0;
+
+	virtual ~Visitor() {}
 };
 
 class Dragon : public Visitor {
 public:
-	// The dragon has two frames for its flapping animation - Why not use a bool?
-	bool frame;
+	static constexpr bool FLAP_UP = false;
+	static constexpr bool FLAP_DOWN = true;
+
+	// The speed of each cycle. The X/Y values are coprime, giving a long cycle
+	static constexpr double X_RATE    = 45.0 / 105.0;
+	static constexpr double Y_RATE    = 28.0 / 105.0;
+	static constexpr double FLAP_RATE = 8.0;
+
+	// The dragon floats randomly around the "true" position. It is offset by
+	// two sine functions with different frequencies
+	static constexpr double X_RADIUS =  6.5;
+	static constexpr double Y_RADIUS = 16.0;
+
+	bool frame = FLAP_UP;
 
 	// Whether the dragon is holding Sue
-	bool holdingSue;
+	bool holdingSue = false;
 
 	// Cycles are from 0-1, counting upwards, and trigger some behaviour when they hit 1
-	double xCyle;
-	double yCyle;
-	double flapCycle;
-
-	// How fast the cycles are "filling"
-	double xFreq = 3.0 / 7.0;
-	double yFreq = 4.0 / 15.0;
-	double flapFreq = 8.0;
+	double xCycle = 0.0;
+	double yCycle = 0.0;
+	double flapCycle = 0.0;
 
 	// Displacement across screen
-	double x = 0;
+	double x = 0.0;
 	// Speed across screen
-	double speed;
+	double speed = 0.0;
 
 	// The frames to draw
 	bitmap* dragon;
 
-	// The dragon floats randomly around the "true" position. It is offset by
-	// two sine functions, of which progress at these two rates (can be thought of as frequencies)
-	double xVariance;
-	double yVariance;
-
 	Dragon(HDC dc);
+	~Dragon();
 
 	void Spawn();
 
@@ -67,18 +72,23 @@ public:
 	void Render();
 };
 
-class Ballrog : public Visitor {
+class Balrog : public Visitor {
 public:
-	// Ballrog also has two frames, coincidentally enough
-	bool frame;
+	static constexpr bool FLAP_UP = false;
+	static constexpr bool FLAP_DOWN = true;
 
-	double xCyle;
-	double yCyle;
-	double flapCycle;
+	static constexpr double X_RATE = 45.0 / 105.0;
+	static constexpr double Y_RATE = 28.0 / 105.0;
+	static constexpr double FLAP_RATE = 12.0;
 
-	double xFreq = 3.0 / 7.0;
-	double yFreq = 4.0 / 15.0;
-	double flapFreq = 12.0;
+	static constexpr double X_RADIUS =  6.5;
+	static constexpr double Y_RADIUS = 16.0;
+
+	bool frame = FLAP_UP;
+
+	double xCycle = 0.0;
+	double yCycle = 0.0;
+	double flapCycle = 0.0;
 
 	// Displacement across screen
 	double x = 0;
@@ -86,12 +96,10 @@ public:
 	double speed = 90;
 
 	// The frames to draw
-	bitmap* ballrog;
+	bitmap* balrog;
 
-	double xVariance = 6.5 * 3.0;
-	double yVariance = 16 * 3.0;
-
-	Ballrog(HDC dc);
+	Balrog(HDC dc);
+	~Balrog();
 
 	void Spawn();
 
@@ -104,16 +112,19 @@ public:
 
 class Helicopter : public Visitor {
 public:
+	// The speed of each cycle. The X/Y values are coprime, giving a long cycle
+	static constexpr double X_RATE = 45.0 / 105.0;
+	static constexpr double Y_RATE = 28.0 / 105.0;
+	static constexpr double PROPELLOR_RATE = 60.0;
+
+	static constexpr double X_RADIUS = 6.5 * 3.0 / 4.0;
+	static constexpr double Y_RADIUS = 16 * 3.0 / 4.0;
 
 	int propellerFrame;
 
-	double xCyle;
-	double yCyle;
+	double xCycle;
+	double yCycle;
 	double propellerCycle;
-
-	double xFreq = 3.0 / 7.0;
-	double yFreq = 4.0 / 15.0;
-	double propellerFreq = 60.0;
 
 	// Displacement across screen
 	double x = 0;
@@ -123,14 +134,12 @@ public:
 	// The frames to draw
 	bitmap* helicopter;
 
-	double xVariance = 6.5 * 3.0 / 4.0;
-	double yVariance = 16 * 3.0 / 4.0;
-
 	Blinker ChakoBlinker;
 	Blinker SantaBlinker;
 	Blinker MomorinBlinker;
 
 	Helicopter(HDC dc);
+	~Helicopter();
 
 	void Spawn();
 	void Despawn();
@@ -151,7 +160,7 @@ public:
 	double appearanceCountdown;
 
 	Visitor** visitors;
-	int visitorCount;
+	static constexpr size_t VISITOR_COUNT = 3;
 	Visitor* currentVisitor = NULL;
 
 	VisitorManager(HDC dc);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include<string>
 #include<Windows.h>
 #include"resource.h"
 #include "DrawingHelpers.h"
@@ -11,11 +12,11 @@
 // I really have no clue what it does but it works, so nice!
 class Window {
 public:
+	static constexpr const WCHAR* CLASS_NAME = L"Window class";
+
 	static HINSTANCE hInst;
 	static HWND hwnd;
-	// What's the difference??
-	static const WCHAR* className;
-	static WCHAR* titleName;
+	static std::wstring title_name;
 	static bool running;
 	static bool visitorsToggled;
 	static bool forceVisitor;

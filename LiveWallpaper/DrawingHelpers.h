@@ -4,15 +4,113 @@
 #include<wingdi.h>
 #include<string>
 
-struct point {
+struct point
+{
 	int x, y;
+
+	constexpr point() noexcept : x(0), y(0) {}
+	constexpr point(int x, int y) noexcept : x(x), y(y) {}
+	constexpr point(const point& other) noexcept : x(other.x), y(other.y) {}
+	constexpr point(point&& other) noexcept : x(other.x), y(other.y) {}
+
+	constexpr point& operator=(const point& other) noexcept
+	{
+		x = other.x;
+		y = other.y;
+		return *this;
+	}
+	constexpr point& operator=(point&& other) noexcept
+	{
+		x = other.x;
+		y = other.y;
+		return *this;
+	}
+
+	constexpr point operator+(const point& other) const { return { x + other.x, y + other.y }; }
+	constexpr point operator-(const point& other) const { return { x - other.x, y - other.y }; }
+	constexpr point& operator+=(const point& other)
+	{
+		x += other.x;
+		y += other.y;
+		return *this;
+	}
+	constexpr point& operator-=(const point& other)
+	{
+		x -= other.x;
+		y -= other.y;
+		return *this; 
+	}
 };
 
-struct rect {
-	int x, y, w, h;
+struct rect
+{
+	union
+	{
+		struct { int x, y, w, h; };
+		struct { point pos, size; };
+	};
+
+	constexpr rect() noexcept : x(0), y(0), w(0), h(0) {}
+	constexpr rect(const point& pos, const point& size) noexcept : x(pos.x), y(pos.y), w(size.x), h(size.y) {}
+	constexpr rect(int x, int y, int w, int h) noexcept : x(x), y(y), w(w), h(h) {}
+	constexpr rect(const rect& other) noexcept : x(other.x), y(other.y), w(other.w), h(other.h) {}
+	constexpr rect(rect&& other) noexcept : x(other.x), y(other.y), w(other.w), h(other.h) {}
+
+	constexpr rect& operator=(const rect& other) noexcept
+	{
+		x = other.x;
+		y = other.y;
+		w = other.w;
+		h = other.h;
+		return *this;
+	}
+	constexpr rect& operator=(rect&& other) noexcept
+	{
+		x = other.x;
+		y = other.y;
+		w = other.w;
+		h = other.h;
+		return *this;
+	}
+
+	constexpr rect operator+(const point& other) const { return { x + other.x, y + other.y, w, h }; }
+	constexpr rect operator-(const point& other) const { return { x - other.x, y - other.y, w, h }; }
+	constexpr rect& operator+=(const point& other)
+	{
+		x += other.x;
+		y += other.y;
+		return *this;
+	}
+	constexpr rect& operator-=(const point& other)
+	{
+		x -= other.x;
+		y -= other.y;
+		return *this;
+	}
+
+	constexpr rect operator+(const rect& other) const { return { x + other.x, y + other.y, w + other.w, h + other.h }; }
+	constexpr rect operator-(const rect& other) const { return { x - other.x, y - other.y, w - other.w, h - other.h }; }
+	constexpr rect& operator+=(const rect& other)
+	{
+		x += other.x;
+		y += other.y;
+		w += other.w;
+		h += other.h;
+		return *this;
+	}
+	constexpr rect& operator-=(const rect& other)
+	{
+		x -= other.x;
+		y -= other.y;
+		w += other.w;
+		h += other.h;
+		return *this;
+	}
 };
 
 point GetScreenSize();
+
+rect GetScreenShape();
 
 // Wrapper for a WinGDI bitmap, because it's awful to directly use win32
 class bitmap {

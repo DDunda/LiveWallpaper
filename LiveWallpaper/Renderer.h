@@ -7,80 +7,101 @@
 #include"DrawingHelpers.h"
 #include"Visitors.h"
 
-// Yes, I know you're yelling at me, but I can't hear you :)
-using namespace std;
-using namespace chrono;
-typedef steady_clock SC;
-
 class Cloud {
 private:
-	// The clouds are a repeating texture 320 raw pixels wide, so this is called 3 times per layer
+	// The clouds are on a tileahpe, 320px wide texture
 	void DrawPart(bitmap* BG, int o);
 
 public:
-	int sectionWidth;
+	int section_width;
 	// Current layer offset (x)
 	double x;
 	// Velocity of cloud movement
 	double v;
-	// Where it the cloud gets drawn (x gets modified)
+	// Where the cloud gets drawn (x gets modified)
 	rect dst;
 	// Where the cloud is gotten from
 	rect src;
 
 	// y is the vertical offset on both the texture and the screen
-	Cloud(double _v, int h, int y);
+	Cloud(double _v, rect src, rect dst);
 	// The clouds blow to the left
 	void Update(double delta);
 	// Draws this cloud layer
 	void Render(bitmap* BG);
 };
 
-// This is the best part of this project. You can almost forgive Win32 for what happens here.
 class Renderer {
 public:
 	static int scale;
 	// Current time in seconds (timestamp of end of previous frame / start of this frame)
-	double current;
+	static double current;
 	// Current time in seconds (timestamp of end of previous previous frame / start of previous frame)
-	double previous;
+	static double previous;
 	// Length in time of previous frame, in seconds
 	double delta;
 
+	typedef std::chrono::steady_clock clock;
+
 	// Chrono timestamp, used for current time
-	SC::time_point currentTP;
+	clock::time_point currentTP;
 	// Chrono timestamp, used for previous time
-	SC::time_point previousTP;
+	clock::time_point previousTP;
 	// Chrono duration, used for delta time
-	SC::duration deltaD;
+	clock::duration deltaD;
 	// Minimum delta time of a frame, to cap the framerate
-	SC::duration minDeltaD;
+	clock::duration minDeltaD;
+
+	// The size of the reference background
+	static constexpr point reference_size =
+	{
+		640,
+		360
+	};
 
 	// Where to draw the stars
-	rect starDst;
+	rect star_dst;
 	// Where to get the stars from the bitmap
-	rect starSrc;
+	static constexpr rect star1_src    = {  0, 0, 9, 9 };
+	static constexpr rect star2_src    = {  5, 0, 9, 9 };
+	static constexpr rect star3_src    = { 10, 0, 9, 9 };
+	static constexpr rect star4_src    = { 15, 0, 9, 9 };
+	static constexpr rect star5_src    = { 25, 0, 9, 9 };
+	static constexpr rect big_star_src = { 27, 0, 9, 9 };
+
+	static constexpr unsigned cloud_width = 320; // Width of cloud texture
+	static constexpr unsigned clouds_height = 152; // Height of all clouds combined
+	static constexpr rect cloud1_src = { 0,  0, cloud_width, 35 };
+	static constexpr rect cloud2_src = { 0, 35, cloud_width, 23 };
+	static constexpr rect cloud3_src = { 0, 58, cloud_width, 30 };
+	static constexpr rect cloud4_src = { 0, 88, cloud_width, 64 };
+
+	static constexpr point moon_size = { 44, 44 };
 
 	// Cloud layers
-	Cloud* clouds1;
-	Cloud* clouds2;
-	Cloud* clouds3;
-	Cloud* clouds4;
+	Cloud* clouds1 = nullptr;
+	Cloud* clouds2 = nullptr;
+	Cloud* clouds3 = nullptr;
+	Cloud* clouds4 = nullptr;
 
-	// Randomly visitors
+	// Background images
+	bitmap* clouds = nullptr;
+	bitmap* stars = nullptr;
+	bitmap* moon = nullptr;
+
+	// Random visitors
 	VisitorManager* visitors;
 
-	// Background image
-	bitmap* BG;
-
 	// Magical DC
-	HDC workerDC;
+	HDC worker_dc;
 
-	HBITMAP renderBuffer;
-	HDC renderDC;
+	HBITMAP star_buffer;
+	HBITMAP render_buffer;
+	HDC star_dc;
+	HDC render_dc;
 
-	point resolution;
-	rect fakeResolution;
+	static point resolution;
+	static rect unscaled_resolution;
 
 	Renderer(HDC workerDC);
 

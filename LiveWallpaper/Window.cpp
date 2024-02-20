@@ -57,25 +57,25 @@ void Window::RegisterWindowClass(PCWSTR className, PCWSTR menuName, WNDPROC wndP
 	wcex.lpszMenuName  = menuName;
 	wcex.lpszClassName = className;
 
-	// Then it just gets disposed? Why is this necessary?
 	RegisterClassEx(&wcex);
 }
 
-void Window::MakeWindow(HINSTANCE h) {
+void Window::MakeWindow(HINSTANCE h)
+{
 	hInst = h;
 
 	// Register the window class
-	RegisterWindowClass(className, MAKEINTRESOURCE(IDC_ICON), WindowProc);
+	RegisterWindowClass(CLASS_NAME, MAKEINTRESOURCE(IDC_ICON), WindowProc);
 
 	// Because regular strings are apparently not enough
-	WCHAR tmpTitle[128];
-	LoadString(hInst, IDS_TITLE, tmpTitle, ARRAYSIZE(tmpTitle));
-	titleName = tmpTitle;
+	WCHAR title_buf [128];
+	LoadString(hInst, IDS_TITLE, title_buf, ARRAYSIZE(title_buf));
+	title_name = std::wstring(title_buf);
 
-	HWND hwnd = CreateWindowEx(
+	const HWND hwnd = CreateWindowEx(
 		0,
-		className,
-		titleName,
+		CLASS_NAME,
+		title_name.c_str(),
 		WS_OVERLAPPEDWINDOW,
 
 		// Size and position
@@ -87,16 +87,15 @@ void Window::MakeWindow(HINSTANCE h) {
 		NULL
 	);
 
-	// Can't be bothered
-	if (hwnd == NULL) return;
+	if (hwnd == NULL) throw std::exception("Could not create window class");
 
-	// Isn't this an oxymoron
 	ShowWindow(hwnd, SW_HIDE);
 
 	running = true;
 }
 
-void Window::MessageLoop() {
+void Window::MessageLoop()
+{
 	MSG msg;
 	// GetMessage WILL block the program, call important stuff in a thread.
 	// You can't call THIS in a thread because windows doesn't allow that, run YOUR stuff in a thread
@@ -127,45 +126,37 @@ BOOL Window::AddTrayIcon(HWND hwnd)
 
 void Window::ShowContextMenu(HWND hwnd, point pt) {
 	HMENU hMenu = LoadMenu(hInst, MAKEINTRESOURCE(IDC_CONTEXTMENU));
+	if (hMenu == NULL) return;
 
-	if (hMenu) {
-		HMENU hSubMenu = GetSubMenu(hMenu, 0);
-		if (hSubMenu) {
-			WCHAR strMenuString[27];
-			WCHAR tmp[27];
-			GetMenuString(hSubMenu, ID__VISITORS, strMenuString, 27, MF_BYCOMMAND);
-			LoadString(hInst, IDS_TOGGLE_DISABLED, tmp, 27);
-			if(visitorsToggled) {
-				LoadString(hInst, IDS_TOGGLE_ENABLED, strMenuString, 27);
-			}
-			else
-			{
-				LoadString(hInst, IDS_TOGGLE_DISABLED, strMenuString, 27);
-			}
-
-			BOOL bChanged = ModifyMenu(hSubMenu, ID__VISITORS, MF_BYCOMMAND | MF_STRING, ID__VISITORS, (LPCTSTR)strMenuString);
-
-			// The window must be foreground before calling TrackPopupMenu or the menu will not disappear when the user clicks away
-			SetForegroundWindow(hwnd);
-
-			// Drop alignment
-			int uFlags = TPM_RIGHTBUTTON;
-			if (GetSystemMetrics(SM_MENUDROPALIGNMENT) != 0)
-			{
-				uFlags |= TPM_RIGHTALIGN;
-			}
-			else uFlags |= TPM_LEFTALIGN;
-
-			TrackPopupMenuEx(hSubMenu, uFlags, pt.x, pt.y, hwnd, NULL);
-		}
+	HMENU hSubMenu = GetSubMenu(hMenu, 0);
+	if (hSubMenu == NULL)
+	{
 		DestroyMenu(hMenu);
+		return;
 	}
+
+	WCHAR strMenuString[27];
+	WCHAR tmp[27];
+	GetMenuString(hSubMenu, ID__VISITORS, strMenuString, 27, MF_BYCOMMAND);
+	LoadString(hInst, IDS_TOGGLE_DISABLED, tmp, 27);
+
+	LoadString(hInst, visitorsToggled ? IDS_TOGGLE_ENABLED : IDS_TOGGLE_DISABLED, strMenuString, 27);
+
+	BOOL bChanged = ModifyMenu(hSubMenu, ID__VISITORS, MF_BYCOMMAND | MF_STRING, ID__VISITORS, (LPCTSTR)strMenuString);
+
+	// The window must be foreground before calling TrackPopupMenu or the menu will not disappear when the user clicks away
+	SetForegroundWindow(hwnd);
+
+	// Drop alignment
+	const int uFlags = TPM_RIGHTBUTTON | (GetSystemMetrics(SM_MENUDROPALIGNMENT) ? TPM_RIGHTALIGN : TPM_LEFTALIGN);
+
+	TrackPopupMenuEx(hSubMenu, uFlags, pt.x, pt.y, hwnd, NULL);
+
+	DestroyMenu(hMenu);
 }
 
-// What else would I call it?
-const WCHAR* Window::className = L"Window class";
 HINSTANCE Window::hInst = NULL;
-WCHAR* Window::titleName = 0;
+std::wstring Window::title_name = L"";
 HWND Window::hwnd = 0;
 bool Window::running = false;
 bool Window::visitorsToggled = true;
