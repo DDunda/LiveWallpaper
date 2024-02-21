@@ -14,15 +14,17 @@ private:
 	void DrawPart(bitmap& bmp, int o);
 
 public:
-	int section_width;
+	int section_width = 0;
 	// Current layer offset (x)
-	double x;
+	double x = 0;
 	// Velocity of cloud movement
-	double v;
+	double v = 0;
 	// Where the cloud gets drawn (x gets modified)
-	rect dst;
+	rect dst = {};
 	// Where the cloud is gotten from
-	rect src;
+	rect src = {};
+
+	Cloud();
 
 	// y is the vertical offset on both the texture and the screen
 	Cloud(double _v, rect src, rect dst);
@@ -34,31 +36,61 @@ public:
 
 class Renderer {
 public:
-	static int scale;
-	// Current time in seconds (timestamp of end of previous frame / start of this frame)
-	static double current;
-	// Current time in seconds (timestamp of end of previous previous frame / start of previous frame)
-	static double previous;
-	// Length in time of previous frame, in seconds
-	double delta;
-
 	typedef std::chrono::steady_clock clock;
 
-	// Chrono timestamp, used for current time
-	clock::time_point current_tp;
-	// Chrono timestamp, used for previous time
-	clock::time_point previous_tp;
-	// Chrono duration, used for delta time
-	clock::duration delta_t;
-	// Minimum delta time of a frame, to cap the framerate
-	static constexpr clock::duration min_delta_t = std::chrono::nanoseconds(1000000000 / 60);
+	// The size of the reference background (background.bmp)
+	static constexpr point REFERENCE_SIZE = { 640, 360 };
 
-	// The size of the reference background
-	static constexpr point reference_size =
+	static constexpr size_t SMALL_STAR_NUM = 5; // Number of small stars on bitmap
+	// Where each small star is on the texture
+	static constexpr std::array<rect, SMALL_STAR_NUM> SMALL_STAR_SRCS =
 	{
-		640,
-		360
+		rect(0, 0, 9, 9),
+		rect(5, 0, 9, 9),
+		rect(10, 0, 9, 9),
+		rect(15, 0, 9, 9),
+		rect(20, 0, 9, 9),
 	};
+	static constexpr rect BIG_STAR_SRC = { 27, 0, 9, 9 }; // Where the big star is on the texture
+
+	static constexpr point SMALL_STAR_OFFSET = { -4, -4 }; // Offset from small star to upper left corner of sprite
+	static constexpr point BIG_STAR_OFFSET = { -2, -2 }; // Offset from big star to upper left corner of sprite
+
+	static constexpr std::array<unsigned, SMALL_STAR_NUM> SMALL_STAR_DENSITIES_MIN = { 40,  90, 140, 140, 40 }; // Minimum small stars per million pixels
+	static constexpr std::array<unsigned, SMALL_STAR_NUM> SMALL_STAR_DENSITIES_MAX = { 60, 110, 160, 160, 60 }; // Maximum small stars per million pixels
+
+	static constexpr unsigned BIG_STAR_DENSITY_MIN = 40; // Minimum big stars per million pixels
+	static constexpr unsigned BIG_STAR_DENSITY_MAX = 60; // Maximum big stars per million pixels
+
+	static constexpr unsigned BIG_STAR_MIN_DISTANCE = 120; // Big stars may not be within 120px of each other
+	static constexpr unsigned BIG_STAR_MIN_MOON_DISTANCE = 27; // Big stars may not be within ~10px of the moon (moon has radius of 17px)
+
+	static constexpr point MOON_SIZE = { 44, 44 }; // Size of moon texture
+	static constexpr point MOON_OFFSET = { -22, -22 }; // Offset from center of moon to upper left corner of texture
+
+	static constexpr point CLOUDS_SIZE = { 320, 152 }; // Size of cloud texture
+	// Where each cloud layer is on the texture
+	static constexpr std::array<rect, 4> CLOUD_SRCS =
+	{
+		rect(0,  0, CLOUDS_SIZE.x, 35),
+		rect(0, 35, CLOUDS_SIZE.x, 23),
+		rect(0, 58, CLOUDS_SIZE.x, 30),
+		rect(0, 88, CLOUDS_SIZE.x, 64),
+	};
+
+	// Minimum delta time of a frame, to cap the framerate
+	static constexpr clock::duration MIN_DELTA_T = std::chrono::nanoseconds(1000000000 / 60);
+	
+	static double current; // Current time in seconds (timestamp of end of previous frame / start of this frame)
+	static double previous; // Previous time in seconds (timestamp of end of previous previous frame / start of previous frame)
+	
+	double delta; // Length of previous frame, in seconds
+	
+	clock::time_point current_tp; // Chrono timestamp, used for current time
+	clock::time_point previous_tp; // Chrono timestamp, used for previous time
+	clock::duration delta_t; // Chrono duration, used for delta time
+
+	static int pixel_scale;
 
 	// Where to get star bitmap (0,0 entire size of buffer)
 	rect sky_src;
@@ -68,33 +100,10 @@ public:
 	HBITMAP sky_buffer = nullptr;
 	HDC sky_dc = nullptr;
 
-	// Where to get the stars from the bitmap
-	static constexpr std::array<rect, 5> small_star_srcs =
-	{
-		rect(  0, 0, 9, 9 ),
-		rect(  5, 0, 9, 9 ),
-		rect( 10, 0, 9, 9 ),
-		rect( 15, 0, 9, 9 ),
-		rect( 25, 0, 9, 9 ),
-	};
-	static constexpr rect big_star_src = { 27, 0, 9, 9 };
-
-	static constexpr unsigned cloud_width = 320; // Width of cloud texture
-	static constexpr unsigned clouds_height = 152; // Height of all clouds combined
-	static constexpr std::array<rect, 4> cloud_srcs =
-	{
-		rect( 0,  0, cloud_width, 35 ),
-		rect( 0, 35, cloud_width, 23 ),
-		rect( 0, 58, cloud_width, 30 ),
-		rect( 0, 88, cloud_width, 64 ),
-	};
-
-	static constexpr point moon_size = { 44, 44 };
+	bitmap* cloud_bmp = nullptr;
 
 	// Cloud layers
-	static std::array<Cloud*, 4> clouds;
-
-	bitmap* cloud_bmp = nullptr;
+	std::array<Cloud, 4> clouds;
 
 	// Random visitors
 	VisitorManager* visitors;

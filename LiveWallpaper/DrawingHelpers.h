@@ -152,13 +152,15 @@ struct rect
 
 	constexpr bool operator==(const rect& other) const noexcept { return x == other.x && y == other.y && w == other.w && h == other.h; }
 	constexpr bool operator!=(const rect& other) const noexcept { return x != other.x || y != other.y || w != other.w || h != other.h; }
+
+	constexpr int area() const noexcept { return w * h; }
+	constexpr int perimeter() const noexcept { return 2 * (w + h); }
 };
 
 point GetScreenSize();
 
 rect GetScreenShape();
 
-// Wrapper for a WinGDI bitmap, because it's awful to directly use win32
 class bitmap {
 public:
 	HBITMAP image;

@@ -23,7 +23,7 @@ void Blinker::Update(double delta) {
 
 // Dragon visitor
 Dragon::Dragon(HDC dc) {
-	speed = 30 * Renderer::scale;
+	speed = 30 * Renderer::pixel_scale;
 	flapCycle = xCycle = yCycle = 0.0;
 	frame = FLAP_UP; // Frame 1
 	dragon = new bitmap(IDB_DRAGON, dc);
@@ -37,9 +37,9 @@ Dragon::~Dragon()
 
 void Dragon::Spawn()
 {
-	x = -(X_RADIUS + 40.0) * Renderer::scale; // Offscreen - to left
+	x = -(X_RADIUS + 40.0) * Renderer::pixel_scale; // Offscreen - to left
 	holdingSue = (rand() % 2) == 1;
-	if (holdingSue) x -= 3 * Renderer::scale;
+	if (holdingSue) x -= 3 * Renderer::pixel_scale;
 }
 
 void Dragon::Despawn() { }
@@ -58,8 +58,8 @@ void Dragon::DrawDragon(point p)
 	{
 		p.x,
 		p.y,
-		40 * Renderer::scale,
-		36 * Renderer::scale
+		40 * Renderer::pixel_scale,
+		36 * Renderer::pixel_scale
 	};
 
 	dragon->tBlit(dst, src, 0);
@@ -76,10 +76,10 @@ void Dragon::DrawSue(point p)
 
 	rect dst
 	{
-		p.x + 27 * Renderer::scale,
-		p.y + 24 * Renderer::scale,
-		16 * Renderer::scale,
-		16 * Renderer::scale
+		p.x + 27 * Renderer::pixel_scale,
+		p.y + 24 * Renderer::pixel_scale,
+		16 * Renderer::pixel_scale,
+		16 * Renderer::pixel_scale
 	};
 
 	dragon->tBlit(dst, src, 0);
@@ -103,14 +103,14 @@ bool Dragon::Update(double delta)
 	while (xCycle >= 1.0) xCycle -= 1.0;
 	while (yCycle >= 1.0) yCycle -= 1.0;
 
-	return x - X_RADIUS * Renderer::scale < Renderer::resolution.x;
+	return x - X_RADIUS * Renderer::pixel_scale < Renderer::resolution.x;
 }
 void Dragon::Render()
 {
 	point p =
 	{
-		(int)round( x     + X_RADIUS * sin(xCycle * 2.0 * M_PI)  * Renderer::scale),
-		(int)round((220.0 + Y_RADIUS * sin(yCycle * 2.0 * M_PI)) * Renderer::scale)
+		(int)round( x     + X_RADIUS * sin(xCycle * 2.0 * M_PI)  * Renderer::pixel_scale),
+		(int)round((220.0 + Y_RADIUS * sin(yCycle * 2.0 * M_PI)) * Renderer::pixel_scale)
 	};
 	DrawDragon(p);
 	if (holdingSue) DrawSue(p);
@@ -119,7 +119,7 @@ void Dragon::Render()
 // Balrog visitor
 Balrog::Balrog(HDC dc)
 {
-	speed = 30 * Renderer::scale;
+	speed = 30 * Renderer::pixel_scale;
 	flapCycle = xCycle = yCycle = 0;
 	frame = false; // Frame 1
 	balrog = new bitmap(IDB_BALROG, dc);
@@ -133,7 +133,7 @@ Balrog::~Balrog()
 
 void Balrog::Spawn()
 {
-	x = -(X_RADIUS + 39.0) * Renderer::scale; // Offscreen - to left
+	x = -(X_RADIUS + 39.0) * Renderer::pixel_scale; // Offscreen - to left
 }
 void Balrog::Despawn() { }
 
@@ -154,7 +154,7 @@ bool Balrog::Update(double delta)
 	while (xCycle >= 1.0) xCycle -= 1.0;
 	while (yCycle >= 1.0) yCycle -= 1.0;
 
-	return x - X_RADIUS * Renderer::scale < Renderer::resolution.x;
+	return x - X_RADIUS * Renderer::pixel_scale < Renderer::resolution.x;
 }
 void Balrog::Render()
 {
@@ -168,10 +168,10 @@ void Balrog::Render()
 
 	rect dst
 	{
-		(int)round( x     + X_RADIUS * sin(xCycle * 2.0 * M_PI)  * Renderer::scale),
-		(int)round((220.0 + Y_RADIUS * sin(yCycle * 2.0 * M_PI)) * Renderer::scale),
-		39 * Renderer::scale,
-		36 * Renderer::scale
+		(int)round( x     + X_RADIUS * sin(xCycle * 2.0 * M_PI)  * Renderer::pixel_scale),
+		(int)round((220.0 + Y_RADIUS * sin(yCycle * 2.0 * M_PI)) * Renderer::pixel_scale),
+		39 * Renderer::pixel_scale,
+		36 * Renderer::pixel_scale
 	};
 
 	balrog->tBlit(dst, src, 0);
@@ -180,7 +180,7 @@ void Balrog::Render()
 // Helicopter visitor
 Helicopter::Helicopter(HDC dc)
 {
-	speed = 30 * Renderer::scale;
+	speed = 30 * Renderer::pixel_scale;
 	propellerCycle = xCycle = yCycle = 0;
 	propellerFrame = 0;
 	helicopter = new bitmap(IDB_HELICOPTER, dc);
@@ -194,7 +194,7 @@ Helicopter::~Helicopter()
 
 void Helicopter::Spawn()
 {
-	x = -(X_RADIUS + 142.0) * Renderer::scale; // Offscreen - to left
+	x = -(X_RADIUS + 142.0) * Renderer::pixel_scale; // Offscreen - to left
 }
 void Helicopter::Despawn() { }
 
@@ -210,10 +210,10 @@ void Helicopter::DrawHelicopterBase(point p)
 
 	rect dst
 	{
-		p.x +  5 * Renderer::scale,
-		p.y + 13 * Renderer::scale,
-		126 * Renderer::scale,
-		 59 * Renderer::scale
+		p.x +  5 * Renderer::pixel_scale,
+		p.y + 13 * Renderer::pixel_scale,
+		126 * Renderer::pixel_scale,
+		 59 * Renderer::pixel_scale
 	};
 
 	helicopter->tBlit(dst, src, 0);
@@ -234,9 +234,9 @@ void Helicopter::DrawPropeller1(point p)
 	rect dst
 	{
 		p.x,
-		p.y + 5 * Renderer::scale,
-		70 * Renderer::scale,
-		14 * Renderer::scale
+		p.y + 5 * Renderer::pixel_scale,
+		70 * Renderer::pixel_scale,
+		14 * Renderer::pixel_scale
 	};
 
 	helicopter->tBlit(dst, src, 0);
@@ -256,10 +256,10 @@ void Helicopter::DrawPropeller2(point p)
 
 	rect dst
 	{
-		p.x + 30 * Renderer::scale,
+		p.x + 30 * Renderer::pixel_scale,
 		p.y,
-		112 * Renderer::scale,
-		14 * Renderer::scale
+		112 * Renderer::pixel_scale,
+		14 * Renderer::pixel_scale
 	};
 
 	helicopter->tBlit(dst, src, 0);
@@ -279,10 +279,10 @@ void Helicopter::DrawBlinks(point p)
 
 		rect dst
 		{
-			p.x + 28 * Renderer::scale,
-			p.y + 46 * Renderer::scale,
-			7 * Renderer::scale,
-			3 * Renderer::scale
+			p.x + 28 * Renderer::pixel_scale,
+			p.y + 46 * Renderer::pixel_scale,
+			7 * Renderer::pixel_scale,
+			3 * Renderer::pixel_scale
 		};
 
 		helicopter->tBlit(dst, src, 0);
@@ -300,10 +300,10 @@ void Helicopter::DrawBlinks(point p)
 
 		rect dst
 		{
-			p.x + 40 * Renderer::scale,
-			p.y + 47 * Renderer::scale,
-			9 * Renderer::scale,
-			2 * Renderer::scale
+			p.x + 40 * Renderer::pixel_scale,
+			p.y + 47 * Renderer::pixel_scale,
+			9 * Renderer::pixel_scale,
+			2 * Renderer::pixel_scale
 		};
 
 		helicopter->tBlit(dst, src, 0);
@@ -321,10 +321,10 @@ void Helicopter::DrawBlinks(point p)
 
 		rect dst
 		{
-			p.x + 54 * Renderer::scale,
-			p.y + 40 * Renderer::scale,
-			7 * Renderer::scale,
-			2 * Renderer::scale
+			p.x + 54 * Renderer::pixel_scale,
+			p.y + 40 * Renderer::pixel_scale,
+			7 * Renderer::pixel_scale,
+			2 * Renderer::pixel_scale
 		};
 
 		helicopter->tBlit(dst, src, 0);
@@ -352,14 +352,14 @@ bool Helicopter::Update(double delta)
 	SantaBlinker.Update(delta);
 	MomorinBlinker.Update(delta);
 
-	return x - X_RADIUS * Renderer::scale < Renderer::resolution.x;
+	return x - X_RADIUS * Renderer::pixel_scale < Renderer::resolution.x;
 }
 void Helicopter::Render()
 {
 	point p =
 	{
-		(int)round( x     + X_RADIUS * sin(xCycle * 2.0 * M_PI) * Renderer::scale),
-		(int)round((250.0 + Y_RADIUS * sin(yCycle * 2.0 * M_PI)) * Renderer::scale)
+		(int)round( x     + X_RADIUS * sin(xCycle * 2.0 * M_PI) * Renderer::pixel_scale),
+		(int)round((250.0 + Y_RADIUS * sin(yCycle * 2.0 * M_PI)) * Renderer::pixel_scale)
 	};
 
 	DrawHelicopterBase(p);

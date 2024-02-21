@@ -1,11 +1,14 @@
 #include"Renderer.h"
+#include <vector>
+
+Cloud::Cloud() {}
 
 // Cloud layers
 Cloud::Cloud(double _v, rect src, rect dst) : src(src), dst(dst)
 {
-	section_width = Renderer::cloud_width * Renderer::scale;
+	section_width = Renderer::CLOUDS_SIZE.x * Renderer::pixel_scale;
 	x = section_width;
-	v = _v * Renderer::scale;
+	v = _v * Renderer::pixel_scale;
 }
 
 void Cloud::DrawPart(bitmap& txt, int o)
@@ -29,18 +32,210 @@ void Cloud::Render(bitmap& txt)
 	}
 }
 
+uint32_t rand32()
+{
+	if constexpr (RAND_MAX >= 0xFFFFFFFF)
+	{
+		return rand();
+	}
+	else if constexpr (RAND_MAX == 0xFFFF)
+	{
+		return
+			static_cast<uint32_t>(static_cast<unsigned int>(rand())) |
+			(static_cast<uint32_t>(static_cast<unsigned int>(rand())) << 16);
+	}
+	else if constexpr (RAND_MAX == 0xFF)
+	{
+		return
+			static_cast<uint32_t>(static_cast<unsigned int>(rand())) |
+			(static_cast<uint32_t>(static_cast<unsigned int>(rand())) << 8) |
+			(static_cast<uint32_t>(static_cast<unsigned int>(rand())) << 16) |
+			(static_cast<uint32_t>(static_cast<unsigned int>(rand())) << 24);
+	}
+	else if constexpr (RAND_MAX <= 0) throw std::exception("RAND_MAX is <= 0?");
+
+	uint32_t num_chunks = 0;
+	uint32_t tmp = 0xFFFFFFFF;
+
+	do {
+		num_chunks++;
+		tmp /= RAND_MAX;
+	} while (tmp > 0);
+
+	uint32_t out_val = static_cast<uint32_t>(static_cast<unsigned int>(rand()));
+	num_chunks--;
+
+	do {
+		out_val *= RAND_MAX + 1;
+		out_val += static_cast<uint32_t>(static_cast<unsigned int>(rand()));
+		num_chunks--;
+	} while (num_chunks > 0);
+
+	return out_val;
+}
+
+void Renderer::RenderSky(bool force_render)
+{
+	if (render_dc == nullptr) throw std::exception("RenderSky > Expected render_dc to be created, was nullptr");
+
+	rect new_sky_src =
+	{
+		0,
+		0,
+		unscaled_resolution.x,
+		REFERENCE_SIZE.y - CLOUDS_SIZE.y // From 0, up to the top of the clouds
+	};
+
+	if (!force_render && new_sky_src == sky_src) return; // Already rendered
+
+	sky_src = new_sky_src;
+	sky_dst = sky_src * pixel_scale;
+
+	if (sky_buffer != nullptr)
+	{
+		DeleteObject(sky_buffer);
+		DeleteDC(sky_dc);
+	}
+
+	sky_dc = CreateCompatibleDC(worker_dc);
+	sky_buffer = CreateCompatibleBitmap
+	(
+		worker_dc,
+		sky_src.w,
+		sky_src.h
+	);
+	SelectObject(sky_dc, sky_buffer);
+
+	// These are cleaned up by going out of scope
+	bitmap stars(IDB_STARS, sky_dc);
+	bitmap moon(IDB_MOON, sky_dc);
+
+	const point moon_pos
+	{
+		(sky_src.w < 216
+		? sky_src.w / 2 // Middle of screen (too thin)
+		: sky_src.w - 108) + sky_src.x, // Static position to the right
+		sky_src.h - 44 + sky_src.y
+	};
+
+	const rect moon_dst =
+	{
+		moon_pos + MOON_OFFSET,
+		MOON_SIZE
+	};
+
+	for (unsigned int i = 0; i < SMALL_STAR_NUM; i++)
+	{
+		const unsigned min_stars = (SMALL_STAR_DENSITIES_MIN[i] * sky_src.area()) / 1000000;
+		const unsigned max_stars = (SMALL_STAR_DENSITIES_MAX[i] * sky_src.area()) / 1000000;
+		unsigned num_stars = min_stars + (min_stars == max_stars ? 0 : rand() % (max_stars - min_stars));
+
+		const rect& src = SMALL_STAR_SRCS[i];
+
+		while (num_stars != 0)
+		{
+			const uint32_t pos_rng = rand32() % (sky_src.area());
+
+			stars.blit
+			(
+				{
+					static_cast<int>(pos_rng % sky_src.w) + SMALL_STAR_OFFSET.x,
+					static_cast<int>(pos_rng / sky_src.w) + SMALL_STAR_OFFSET.y,
+					src.w,
+					src.h
+				},
+				src
+			);
+			num_stars--;
+		}
+	}
+
+	moon.blit
+	(
+		moon_dst,
+		{ 0, 0, MOON_SIZE.x, MOON_SIZE.y }
+	);
+
+	const rect big_star_sky =
+	{
+		3,
+		3,
+		sky_src.w - 6,
+		sky_src.h - 6,
+	};
+
+	const int area = big_star_sky.area() - M_PI * BIG_STAR_MIN_MOON_DISTANCE * BIG_STAR_MIN_MOON_DISTANCE;
+
+	if (area <= 0) return;
+
+	const unsigned min_big_stars = (BIG_STAR_DENSITY_MIN * area) / 1000000;
+	const unsigned max_big_stars = (BIG_STAR_DENSITY_MAX * area) / 1000000;
+	unsigned num_big_stars = min_big_stars + (min_big_stars == max_big_stars ? 0 : rand() % (max_big_stars - min_big_stars));
+
+	constexpr size_t MAX_FAILS = 0;
+	size_t fails = 0;
+
+	std::vector<point> big_stars = {};
+
+	while (num_big_stars != 0)
+	{
+		const uint32_t pos_rng = rand32() % (sky_src.area());
+		const int x = static_cast<int>(pos_rng % sky_src.w);
+		const int y = static_cast<int>(pos_rng / sky_src.w);
+
+		unsigned long min_dist2 = ~0ul;
+
+		if (!big_stars.empty())
+		{
+			min_dist2 = (x - big_stars[0].x) * (x - big_stars[0].x) + (y - big_stars[0].y) * (y - big_stars[0].y);
+
+			for (size_t i = 1; i < big_stars.size(); i++)
+			{
+				unsigned long dist2 = (x - big_stars[i].x) * (x - big_stars[i].x) + (y - big_stars[i].y) * (y - big_stars[i].y);
+				min_dist2 = min(min_dist2, dist2);
+			}
+		}
+
+		if (min_dist2 >= BIG_STAR_MIN_DISTANCE * BIG_STAR_MIN_DISTANCE &&
+			(x - moon_pos.x) * (x - moon_pos.x) +
+			(y - moon_pos.y) * (y - moon_pos.y) >=
+			BIG_STAR_MIN_MOON_DISTANCE * BIG_STAR_MIN_MOON_DISTANCE)
+		{
+			stars.blit
+			(
+				{
+					x + BIG_STAR_OFFSET.x,
+					y + BIG_STAR_OFFSET.y,
+					BIG_STAR_SRC.w,
+					BIG_STAR_SRC.h
+				},
+				BIG_STAR_SRC
+			);
+		}
+		else if constexpr (MAX_FAILS > 0)
+		{
+			fails++;
+			if (fails < MAX_FAILS) continue;
+			fails = 0;
+		}
+
+		num_big_stars--;
+	}
+
+}
+
 Renderer::Renderer(HDC wDC)
 {
 	resolution = GetScreenSize();
 
 	using namespace std::chrono;
 
-	scale = ceil(resolution.y / (double)reference_size.y);
+	pixel_scale = ceil(resolution.y / (double)REFERENCE_SIZE.y);
 
 	unscaled_resolution =
 	{
-		resolution.x / scale,
-		reference_size.y
+		resolution.x / pixel_scale,
+		REFERENCE_SIZE.y
 	};
 
 	worker_dc = wDC;
@@ -67,95 +262,28 @@ Renderer::Renderer(HDC wDC)
 
 	cloud_bmp = new bitmap(IDB_CLOUDS, render_dc);
 
-	const int clouds_top = (reference_size.y - clouds_height) * scale; // If not perfectly scaled, the clouds will hang off the bottom of the screen
+	const int clouds_top = (REFERENCE_SIZE.y - CLOUDS_SIZE.y) * pixel_scale; // If not perfectly scaled, the clouds will hang off the bottom of the screen
 
-	clouds[0] = new Cloud(3.75, cloud_srcs[0], { 0, clouds_top,                          cloud_srcs[0].w * scale, cloud_srcs[0].h * scale });
-	clouds[1] = new Cloud(7.5,  cloud_srcs[1], { 0, clouds[0]->dst.y + clouds[0]->dst.h, cloud_srcs[1].w * scale, cloud_srcs[1].h * scale });
-	clouds[2] = new Cloud(15.0, cloud_srcs[2], { 0, clouds[1]->dst.y + clouds[1]->dst.h, cloud_srcs[2].w * scale, cloud_srcs[2].h * scale });
-	clouds[3] = new Cloud(30.0, cloud_srcs[3], { 0, clouds[2]->dst.y + clouds[2]->dst.h, cloud_srcs[3].w * scale, cloud_srcs[3].h * scale });
+	clouds =
+	{
+		Cloud( 3.75, CLOUD_SRCS[0], { 0, 0, CLOUD_SRCS[0].w * pixel_scale, CLOUD_SRCS[0].h * pixel_scale }),
+		Cloud( 7.50, CLOUD_SRCS[1], { 0, 0, CLOUD_SRCS[1].w * pixel_scale, CLOUD_SRCS[1].h * pixel_scale }),
+		Cloud(15.00, CLOUD_SRCS[2], { 0, 0, CLOUD_SRCS[2].w * pixel_scale, CLOUD_SRCS[2].h * pixel_scale }),
+		Cloud(30.00, CLOUD_SRCS[3], { 0, 0, CLOUD_SRCS[3].w * pixel_scale, CLOUD_SRCS[3].h * pixel_scale }),
+	};
+
+	clouds[0].dst.y = clouds_top;
+	clouds[1].dst.y = clouds[0].dst.y + clouds[0].dst.h;
+	clouds[2].dst.y = clouds[1].dst.y + clouds[1].dst.h;
+	clouds[3].dst.y = clouds[2].dst.y + clouds[2].dst.h;
 
 	visitors = new VisitorManager(render_dc);
 
 	RenderSky();
 }
 
-void Renderer::RenderSky(bool force_render)
-{
-	if (render_dc == nullptr) throw std::exception("RenderSky > Expected render_dc to be created, was nullptr");
-
-	rect new_sky_src =
-	{
-		0,
-		0,
-		unscaled_resolution.x,
-		reference_size.y - clouds_height // From 0, up to the top of the clouds
-	};
-
-	if (!force_render && new_sky_src == sky_src) return; // Already rendered
-
-	sky_src = new_sky_src;
-
-	if (sky_buffer != nullptr)
-	{
-		DeleteObject(sky_buffer);
-		DeleteDC(sky_dc);
-	}
-
-	sky_dc = CreateCompatibleDC(worker_dc);
-	sky_buffer = CreateCompatibleBitmap
-	(
-		worker_dc,
-		sky_src.w,
-		sky_src.h
-	);
-	SelectObject(sky_dc, sky_buffer);
-
-	// These are cleaned up by going out of scope
-	bitmap stars(IDB_STARS, sky_dc);
-	bitmap moon(IDB_MOON, sky_dc);
-
-	const point unscaled_star_area = { unscaled_resolution.x, reference_size.y - clouds_height };
-
-	constexpr point moon_offset = { -22, -22 };
-	constexpr point star_offset = { -4, -4 };
-	constexpr point big_star_offset = { -2, -2 };
-	constexpr unsigned min_big_star_distance = 120;
-
-	constexpr point moon_position = { -108, -44 };
-
-	constexpr unsigned moon_area = 872;
-	const unsigned area = unscaled_star_area.area() - moon_area;
-
-	const rect moon_dst =
-	{
-		point(
-			(sky_src.w < 216
-			? sky_src.w / 2 // Middle of screen (too thin)
-			: sky_src.w + moon_position.x) + sky_src.x, // Static position to the right
-			sky_src.h + moon_position.y + sky_src.y
-		)
-		+ moon_offset,
-		moon_size
-	};
-
-	moon.blit
-	(
-		moon_dst,
-		{ { 0, 0 }, moon_size }
-	);
-
-	sky_dst = sky_src * scale;
-}
-
 Renderer::~Renderer()
 {
-	for (Cloud*& cloud : clouds)
-	{
-		if (cloud == nullptr) continue;
-		delete cloud;
-		cloud = nullptr;
-	}
-
 	if (cloud_bmp != nullptr)
 	{
 		delete cloud_bmp;
@@ -193,12 +321,12 @@ void Renderer::HandleTime()
 	current = duration_cast<milliseconds>(current_tp.time_since_epoch()).count() / 1000.0;
 	delta = current - previous;
 
-	if (delta_t >= min_delta_t) return;
+	if (delta_t >= MIN_DELTA_T) return;
 
 	// Limits framerate
-	Sleep(duration_cast<milliseconds>(min_delta_t - delta_t).count());
-	delta_t = min_delta_t; // Pretend that exactly the delta has passed
-	current_tp = previous_tp + min_delta_t;
+	Sleep(duration_cast<milliseconds>(MIN_DELTA_T - delta_t).count());
+	delta_t = MIN_DELTA_T; // Pretend that exactly the delta has passed
+	current_tp = previous_tp + MIN_DELTA_T;
 
 	current = duration_cast<milliseconds>(current_tp.time_since_epoch()).count() / 1000.0;
 	delta = current - previous;
@@ -209,7 +337,7 @@ void Renderer::RenderLoop()
 	while (Window::running)
 	{
 		// Moves clouds left
-		for (auto& cloud : clouds) cloud->Update(delta);
+		for (auto& cloud : clouds) cloud.Update(delta);
 
 		// Draw stars
 		StretchBlt
@@ -229,7 +357,7 @@ void Renderer::RenderLoop()
 		);
 
 		// Draw clouds
-		for (auto& cloud : clouds) cloud->Render(*cloud_bmp);
+		for (auto& cloud : clouds) cloud.Render(*cloud_bmp);
 
 		// Draw visitors
 		if (Window::visitorsToggled)
@@ -256,11 +384,9 @@ void Renderer::RenderLoop()
 	}
 }
 
-int Renderer::scale = 1;
+int Renderer::pixel_scale = 1;
 double Renderer::current = 0.0;
 double Renderer::previous = 0.0;
 
 point Renderer::resolution = {};
 point Renderer::unscaled_resolution = {};
-
-std::array<Cloud*, 4> Renderer::clouds = { nullptr, nullptr, nullptr, nullptr };
