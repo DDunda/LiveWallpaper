@@ -73,8 +73,8 @@ STRINGTABLE
 BEGIN
     IDS_TITLE               "LiveWallpaper"
     IDS_TOOLTIP             "Clouds Wallpaper"
-    IDS_TOGGLE_DISABLED     "Toggle visitors (Disabled)"
-    IDS_TOGGLE_ENABLED      "Toggle visitors (Enabled) "
+    IDS_TOGGLE_DISABLED     "Allow visitors (Disabled)"
+    IDS_TOGGLE_ENABLED      "Allow visitors (Enabled) "
 END
 
 #endif    // English (United Kingdom) resources

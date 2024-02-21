@@ -135,12 +135,12 @@ void Window::ShowContextMenu(HWND hwnd, point pt) {
 		return;
 	}
 
-	WCHAR strMenuString[27];
-	WCHAR tmp[27];
-	GetMenuString(hSubMenu, ID__VISITORS, strMenuString, 27, MF_BYCOMMAND);
-	LoadString(hInst, IDS_TOGGLE_DISABLED, tmp, 27);
+	WCHAR strMenuString[26];
+	WCHAR tmp[26];
+	GetMenuString(hSubMenu, ID__VISITORS, strMenuString, 26, MF_BYCOMMAND);
+	LoadString(hInst, IDS_TOGGLE_DISABLED, tmp, 26);
 
-	LoadString(hInst, visitorsToggled ? IDS_TOGGLE_ENABLED : IDS_TOGGLE_DISABLED, strMenuString, 27);
+	LoadString(hInst, visitorsToggled ? IDS_TOGGLE_ENABLED : IDS_TOGGLE_DISABLED, strMenuString, 26);
 
 	BOOL bChanged = ModifyMenu(hSubMenu, ID__VISITORS, MF_BYCOMMAND | MF_STRING, ID__VISITORS, (LPCTSTR)strMenuString);
 
