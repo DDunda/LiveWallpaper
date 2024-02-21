@@ -26,20 +26,43 @@ struct point
 		return *this;
 	}
 
-	constexpr point operator+(const point& other) const { return { x + other.x, y + other.y }; }
-	constexpr point operator-(const point& other) const { return { x - other.x, y - other.y }; }
-	constexpr point& operator+=(const point& other)
+	constexpr point operator+(const point& other) const noexcept { return { x + other.x, y + other.y }; }
+	constexpr point operator-(const point& other) const noexcept { return { x - other.x, y - other.y }; }
+	constexpr point& operator+=(const point& other) noexcept
 	{
 		x += other.x;
 		y += other.y;
 		return *this;
 	}
-	constexpr point& operator-=(const point& other)
+	constexpr point& operator-=(const point& other) noexcept
 	{
 		x -= other.x;
 		y -= other.y;
 		return *this; 
 	}
+
+	constexpr point operator*(int factor) const noexcept { return { x * factor, y * factor }; }
+	constexpr point& operator*=(int factor) noexcept
+	{
+		x *= factor;
+		y *= factor;
+		return *this;
+	}
+
+	constexpr point operator/(int factor) const noexcept { return { x / factor, y / factor }; }
+	constexpr point& operator/=(int factor) noexcept
+	{
+		x /= factor;
+		y /= factor;
+		return *this;
+	}
+
+	constexpr bool operator==(const point& other) const noexcept { return x == other.x && y == other.y; }
+	constexpr bool operator!=(const point& other) const noexcept { return x != other.x || y != other.y; }
+
+	// Treats x and y like a width and height
+	constexpr int area() const noexcept { return x * y; }
+	constexpr int perimeter() const noexcept { return 2 * (x + y); }
 };
 
 struct rect
@@ -106,6 +129,29 @@ struct rect
 		h += other.h;
 		return *this;
 	}
+
+	constexpr rect operator*(int factor) const noexcept { return { x * factor, y * factor, w * factor, h * factor }; }
+	constexpr rect& operator*=(int factor) noexcept
+	{
+		x *= factor;
+		y *= factor;
+		w *= factor;
+		h *= factor;
+		return *this;
+	}
+
+	constexpr rect operator/(int factor) const noexcept { return { x / factor, y / factor, w / factor, h / factor }; }
+	constexpr rect& operator/=(int factor) noexcept
+	{
+		x /= factor;
+		y /= factor;
+		w /= factor;
+		h /= factor;
+		return *this;
+	}
+
+	constexpr bool operator==(const rect& other) const noexcept { return x == other.x && y == other.y && w == other.w && h == other.h; }
+	constexpr bool operator!=(const rect& other) const noexcept { return x != other.x || y != other.y || w != other.w || h != other.h; }
 };
 
 point GetScreenSize();
