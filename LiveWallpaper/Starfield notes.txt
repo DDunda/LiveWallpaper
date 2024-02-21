@@ -22,6 +22,10 @@ big star:  45.37 ( 50 +- 10)
 
 Big star distances: 134, 322, 201, 121, 140, 216, 254 (120 min distance)
 
-Moon position:
-91px from right (put at 50% of width if too thin. unlikely.)
-27px from the bottom (approx 21% of the height; nah, use constant offset)
+Moon position (center of moon):
+108px from right (put at 50% of width if too thin. unlikely.)
+44px from top of clouds (approx 21% of the height; nah, use constant offset)
+
+moon.bmp position:
+130px from right
+66 px from top of clouds

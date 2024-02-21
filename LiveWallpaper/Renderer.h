@@ -3,14 +3,15 @@
 #include <chrono>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <array>
 #include"Window.h"
 #include"DrawingHelpers.h"
 #include"Visitors.h"
 
 class Cloud {
 private:
-	// The clouds are on a tileahpe, 320px wide texture
-	void DrawPart(bitmap* BG, int o);
+	// The clouds are on a tileable, 320px wide texture
+	void DrawPart(bitmap& bmp, int o);
 
 public:
 	int section_width;
@@ -28,7 +29,7 @@ public:
 	// The clouds blow to the left
 	void Update(double delta);
 	// Draws this cloud layer
-	void Render(bitmap* BG);
+	void Render(bitmap& bmp);
 };
 
 class Renderer {
@@ -44,13 +45,13 @@ public:
 	typedef std::chrono::steady_clock clock;
 
 	// Chrono timestamp, used for current time
-	clock::time_point currentTP;
+	clock::time_point current_tp;
 	// Chrono timestamp, used for previous time
-	clock::time_point previousTP;
+	clock::time_point previous_tp;
 	// Chrono duration, used for delta time
-	clock::duration deltaD;
+	clock::duration delta_t;
 	// Minimum delta time of a frame, to cap the framerate
-	clock::duration minDeltaD;
+	static constexpr clock::duration min_delta_t = std::chrono::nanoseconds(1000000000 / 60);
 
 	// The size of the reference background
 	static constexpr point reference_size =
@@ -59,35 +60,41 @@ public:
 		360
 	};
 
+	// Where to get star bitmap (0,0 entire size of buffer)
+	rect sky_src;
 	// Where to draw the stars
-	rect star_dst;
+	rect sky_dst;
+
+	HBITMAP sky_buffer = nullptr;
+	HDC sky_dc = nullptr;
+
 	// Where to get the stars from the bitmap
-	static constexpr rect star1_src    = {  0, 0, 9, 9 };
-	static constexpr rect star2_src    = {  5, 0, 9, 9 };
-	static constexpr rect star3_src    = { 10, 0, 9, 9 };
-	static constexpr rect star4_src    = { 15, 0, 9, 9 };
-	static constexpr rect star5_src    = { 25, 0, 9, 9 };
+	static constexpr std::array<rect, 5> small_star_srcs =
+	{
+		rect(  0, 0, 9, 9 ),
+		rect(  5, 0, 9, 9 ),
+		rect( 10, 0, 9, 9 ),
+		rect( 15, 0, 9, 9 ),
+		rect( 25, 0, 9, 9 ),
+	};
 	static constexpr rect big_star_src = { 27, 0, 9, 9 };
 
 	static constexpr unsigned cloud_width = 320; // Width of cloud texture
 	static constexpr unsigned clouds_height = 152; // Height of all clouds combined
-	static constexpr rect cloud1_src = { 0,  0, cloud_width, 35 };
-	static constexpr rect cloud2_src = { 0, 35, cloud_width, 23 };
-	static constexpr rect cloud3_src = { 0, 58, cloud_width, 30 };
-	static constexpr rect cloud4_src = { 0, 88, cloud_width, 64 };
+	static constexpr std::array<rect, 4> cloud_srcs =
+	{
+		rect( 0,  0, cloud_width, 35 ),
+		rect( 0, 35, cloud_width, 23 ),
+		rect( 0, 58, cloud_width, 30 ),
+		rect( 0, 88, cloud_width, 64 ),
+	};
 
 	static constexpr point moon_size = { 44, 44 };
 
 	// Cloud layers
-	Cloud* clouds1 = nullptr;
-	Cloud* clouds2 = nullptr;
-	Cloud* clouds3 = nullptr;
-	Cloud* clouds4 = nullptr;
+	static std::array<Cloud*, 4> clouds;
 
-	// Background images
-	bitmap* clouds = nullptr;
-	bitmap* stars = nullptr;
-	bitmap* moon = nullptr;
+	bitmap* cloud_bmp = nullptr;
 
 	// Random visitors
 	VisitorManager* visitors;
@@ -95,15 +102,15 @@ public:
 	// Magical DC
 	HDC worker_dc;
 
-	HBITMAP star_buffer;
 	HBITMAP render_buffer;
-	HDC star_dc;
 	HDC render_dc;
 
 	static point resolution;
-	static rect unscaled_resolution;
+	static point unscaled_resolution;
 
-	Renderer(HDC workerDC);
+	void RenderSky(bool force_render = false);
+
+	Renderer(HDC worker_dc);
 
 	~Renderer();
 

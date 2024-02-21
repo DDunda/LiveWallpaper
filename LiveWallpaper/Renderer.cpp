@@ -1,23 +1,28 @@
 #include"Renderer.h"
 
 // Cloud layers
-Cloud::Cloud(double _v, rect src, rect dst) : src(src), dst(dst) {
+Cloud::Cloud(double _v, rect src, rect dst) : src(src), dst(dst)
+{
 	section_width = Renderer::cloud_width * Renderer::scale;
 	x = section_width;
 	v = _v * Renderer::scale;
 }
 
-void Cloud::DrawPart(bitmap* txt, int o) {
+void Cloud::DrawPart(bitmap& txt, int o)
+{
 	dst.x = (int)round(x + o);
-	txt->blit(dst, src);
+	txt.blit(dst, src);
 }
 
-void Cloud::Update(double delta) {
+void Cloud::Update(double delta)
+{
 	x -= v * delta;
 	// Wraps to the right once the leftmost cloud part is completely off the screen
 	while (x <= 0) x += section_width;
 }
-void Cloud::Render(bitmap* txt) {
+
+void Cloud::Render(bitmap& txt)
+{
 	for (int x = -section_width; x < Renderer::resolution.x + section_width; x += section_width)
 	{
 		DrawPart(txt, x);
@@ -30,95 +35,149 @@ Renderer::Renderer(HDC wDC)
 
 	using namespace std::chrono;
 
-	scale = ceil(resolution.y / reference_size.y);
+	scale = ceil(resolution.y / (double)reference_size.y);
 
-	unscaled_resolution = {
-		0,
-		resolution.y - scale * reference_size.y,
-		resolution.x,
-		scale * reference_size.y
+	unscaled_resolution =
+	{
+		resolution.x / scale,
+		reference_size.y
 	};
 
 	worker_dc = wDC;
 
 	render_dc = CreateCompatibleDC(worker_dc);
-	render_buffer = CreateCompatibleBitmap(
+	render_buffer = CreateCompatibleBitmap
+	(
 		worker_dc,
-		unscaled_resolution.w,
-		unscaled_resolution.h
+		resolution.x,
+		resolution.y
 	);
+
 	SelectObject(render_dc, render_buffer);
 
 	delta = current = previous = 0;
 
 	// 60 60ths of a second adds to a second - 60fps
-	minDeltaD = nanoseconds(1000000000 / 60);
-	currentTP = clock::now();
-	previousTP = currentTP;
+	previous_tp = current_tp = clock::now();
 
-	current = duration_cast<milliseconds>(currentTP.time_since_epoch()).count() / 1000.0;
+	current = duration_cast<milliseconds>(current_tp.time_since_epoch()).count() / 1000.0;
 	previous = current;
 
 	srand(current);
 
-	clouds = new bitmap(IDB_CLOUDS, render_dc);
-	moon   = new bitmap(IDB_MOON,   render_dc);
+	cloud_bmp = new bitmap(IDB_CLOUDS, render_dc);
 
 	const int clouds_top = (reference_size.y - clouds_height) * scale; // If not perfectly scaled, the clouds will hang off the bottom of the screen
 
-	clouds1 = new Cloud(3.75, cloud1_src, { 0, clouds_top,                      cloud1_src.w * scale, cloud1_src.h * scale });
-	clouds2 = new Cloud( 7.5, cloud2_src, { 0, clouds1->dst.y + clouds1->dst.h, cloud2_src.w * scale, cloud2_src.h * scale });
-	clouds3 = new Cloud(15.0, cloud3_src, { 0, clouds2->dst.y + clouds2->dst.h, cloud3_src.w * scale, cloud3_src.h * scale });
-	clouds4 = new Cloud(30.0, cloud4_src, { 0, clouds3->dst.y + clouds3->dst.h, cloud4_src.w * scale, cloud4_src.h * scale });
-
-	star_dst =
-	{
-		0,
-		0,
-		resolution.x,
-		clouds_top // From 0, up to the top of the clouds
-	};
+	clouds[0] = new Cloud(3.75, cloud_srcs[0], { 0, clouds_top,                          cloud_srcs[0].w * scale, cloud_srcs[0].h * scale });
+	clouds[1] = new Cloud(7.5,  cloud_srcs[1], { 0, clouds[0]->dst.y + clouds[0]->dst.h, cloud_srcs[1].w * scale, cloud_srcs[1].h * scale });
+	clouds[2] = new Cloud(15.0, cloud_srcs[2], { 0, clouds[1]->dst.y + clouds[1]->dst.h, cloud_srcs[2].w * scale, cloud_srcs[2].h * scale });
+	clouds[3] = new Cloud(30.0, cloud_srcs[3], { 0, clouds[2]->dst.y + clouds[2]->dst.h, cloud_srcs[3].w * scale, cloud_srcs[3].h * scale });
 
 	visitors = new VisitorManager(render_dc);
 
-	rect moon_dst = { point(0,0), moon_size };
+	RenderSky();
+}
 
-	star_dc = CreateCompatibleDC(worker_dc);
-	star_buffer = CreateCompatibleBitmap(
+void Renderer::RenderSky(bool force_render)
+{
+	if (render_dc == nullptr) throw std::exception("RenderSky > Expected render_dc to be created, was nullptr");
+
+	rect new_sky_src =
+	{
+		0,
+		0,
+		unscaled_resolution.x,
+		reference_size.y - clouds_height // From 0, up to the top of the clouds
+	};
+
+	if (!force_render && new_sky_src == sky_src) return; // Already rendered
+
+	sky_src = new_sky_src;
+
+	if (sky_buffer != nullptr)
+	{
+		DeleteObject(sky_buffer);
+		DeleteDC(sky_dc);
+	}
+
+	sky_dc = CreateCompatibleDC(worker_dc);
+	sky_buffer = CreateCompatibleBitmap
+	(
 		worker_dc,
-		star_dst.w,
-		star_dst.h
+		sky_src.w,
+		sky_src.h
 	);
-	SelectObject(star_dc, star_buffer);
+	SelectObject(sky_dc, sky_buffer);
 
-	stars = new bitmap(IDB_STARS, star_dc);
+	// These are cleaned up by going out of scope
+	bitmap stars(IDB_STARS, sky_dc);
+	bitmap moon(IDB_MOON, sky_dc);
+
+	const point unscaled_star_area = { unscaled_resolution.x, reference_size.y - clouds_height };
+
+	constexpr point moon_offset = { -22, -22 };
+	constexpr point star_offset = { -4, -4 };
+	constexpr point big_star_offset = { -2, -2 };
+	constexpr unsigned min_big_star_distance = 120;
+
+	constexpr point moon_position = { -108, -44 };
+
+	constexpr unsigned moon_area = 872;
+	const unsigned area = unscaled_star_area.area() - moon_area;
+
+	const rect moon_dst =
+	{
+		point(
+			(sky_src.w < 216
+			? sky_src.w / 2 // Middle of screen (too thin)
+			: sky_src.w + moon_position.x) + sky_src.x, // Static position to the right
+			sky_src.h + moon_position.y + sky_src.y
+		)
+		+ moon_offset,
+		moon_size
+	};
+
+	moon.blit
+	(
+		moon_dst,
+		{ { 0, 0 }, moon_size }
+	);
+
+	sky_dst = sky_src * scale;
 }
 
 Renderer::~Renderer()
 {
-	if (clouds1 != nullptr) delete clouds1;
-	if (clouds2 != nullptr) delete clouds2;
-	if (clouds3 != nullptr) delete clouds3;
-	if (clouds4 != nullptr) delete clouds4;
+	for (Cloud*& cloud : clouds)
+	{
+		if (cloud == nullptr) continue;
+		delete cloud;
+		cloud = nullptr;
+	}
 
-	if (clouds != nullptr) delete clouds;
-	if (stars  != nullptr) delete stars;
-	if (moon   != nullptr) delete moon;
+	if (cloud_bmp != nullptr)
+	{
+		delete cloud_bmp;
+		cloud_bmp = nullptr;
+	}
 
-	clouds1 = nullptr;
-	clouds2 = nullptr;
-	clouds3 = nullptr;
-	clouds4 = nullptr;
+	if (sky_buffer != nullptr)
+	{
+		DeleteObject(sky_buffer);
+		DeleteDC(sky_dc);
+		sky_buffer = nullptr;
+		sky_dc = nullptr;
+	}
 
-	clouds  = nullptr;
-	stars   = nullptr;
-	moon    = nullptr;
+	if (render_dc != nullptr)
+	{
+		DeleteObject(render_buffer);
+		DeleteDC(render_dc);
+		render_buffer = nullptr;
+		render_dc = nullptr;
+	}
 
-	DeleteObject(star_buffer);
-	DeleteObject(render_buffer);
-
-	DeleteDC(star_dc);
-	DeleteDC(render_dc);
 	DeleteDC(worker_dc);
 }
 
@@ -126,23 +185,23 @@ void Renderer::HandleTime()
 {
 	using namespace std::chrono;
 
-	previousTP = currentTP;
-	currentTP = clock::now();
-	deltaD = currentTP - previousTP;
+	previous_tp = current_tp;
+	current_tp = clock::now();
+	delta_t = current_tp - previous_tp;
 
 	previous = current;
-	current = duration_cast<milliseconds>(currentTP.time_since_epoch()).count() / 1000.0;
+	current = duration_cast<milliseconds>(current_tp.time_since_epoch()).count() / 1000.0;
 	delta = current - previous;
 
-	// Limits framerate
-	if (deltaD < minDeltaD) {
-		Sleep(duration_cast<milliseconds>(minDeltaD - deltaD).count());
-		deltaD = minDeltaD; // Pretend that exactly the delta has passed
-		currentTP = previousTP + minDeltaD;
+	if (delta_t >= min_delta_t) return;
 
-		current = duration_cast<milliseconds>(currentTP.time_since_epoch()).count() / 1000.0;
-		delta = current - previous;
-	}
+	// Limits framerate
+	Sleep(duration_cast<milliseconds>(min_delta_t - delta_t).count());
+	delta_t = min_delta_t; // Pretend that exactly the delta has passed
+	current_tp = previous_tp + min_delta_t;
+
+	current = duration_cast<milliseconds>(current_tp.time_since_epoch()).count() / 1000.0;
+	delta = current - previous;
 }
 
 void Renderer::RenderLoop()
@@ -150,30 +209,27 @@ void Renderer::RenderLoop()
 	while (Window::running)
 	{
 		// Moves clouds left
-		clouds1->Update(delta);
-		clouds2->Update(delta);
-		clouds3->Update(delta);
-		clouds4->Update(delta);
+		for (auto& cloud : clouds) cloud->Update(delta);
 
 		// Draw stars
-		BitBlt
+		StretchBlt
 		(
 			render_dc,
-			star_dst.x,
-			star_dst.y,
-			star_dst.w,
-			star_dst.h,
-			star_dc,
-			0,
-			0,
+			sky_dst.x,
+			sky_dst.y,
+			sky_dst.w,
+			sky_dst.h,
+
+			sky_dc,
+			sky_src.x,
+			sky_src.y,
+			sky_src.w,
+			sky_src.h,
 			SRCCOPY
 		);
 
 		// Draw clouds
-		clouds1->Render(clouds);
-		clouds2->Render(clouds);
-		clouds3->Render(clouds);
-		clouds4->Render(clouds);
+		for (auto& cloud : clouds) cloud->Render(*cloud_bmp);
 
 		// Draw visitors
 		if (Window::visitorsToggled)
@@ -185,10 +241,10 @@ void Renderer::RenderLoop()
 		BitBlt
 		(
 			worker_dc,
-			unscaled_resolution.x,
-			unscaled_resolution.y,
-			unscaled_resolution.w,
-			unscaled_resolution.h,
+			0,
+			0,
+			resolution.x,
+			resolution.y,
 			render_dc,
 			0,
 			0,
@@ -205,4 +261,6 @@ double Renderer::current = 0.0;
 double Renderer::previous = 0.0;
 
 point Renderer::resolution = {};
-rect Renderer::unscaled_resolution = {};
+point Renderer::unscaled_resolution = {};
+
+std::array<Cloud*, 4> Renderer::clouds = { nullptr, nullptr, nullptr, nullptr };
