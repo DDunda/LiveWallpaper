@@ -139,8 +139,8 @@ void Renderer::RenderSky(bool force_render)
 			stars.blit
 			(
 				{
-					static_cast<int>(pos_rng % sky_src.w) + SMALL_STAR_OFFSET.x,
-					static_cast<int>(pos_rng / sky_src.w) + SMALL_STAR_OFFSET.y,
+					static_cast<int>(pos_rng % sky_src.w) + STAR_OFFSET.x,
+					static_cast<int>(pos_rng / sky_src.w) + STAR_OFFSET.y,
 					src.w,
 					src.h
 				},
@@ -158,10 +158,10 @@ void Renderer::RenderSky(bool force_render)
 
 	const rect big_star_sky =
 	{
-		3,
-		3,
-		sky_src.w - 6,
-		sky_src.h - 6,
+		4,
+		4,
+		sky_src.w - 8,
+		sky_src.h - 8,
 	};
 
 	const int area = big_star_sky.area() - M_PI * BIG_STAR_MIN_MOON_DISTANCE * BIG_STAR_MIN_MOON_DISTANCE;
@@ -172,16 +172,16 @@ void Renderer::RenderSky(bool force_render)
 	const unsigned max_big_stars = (BIG_STAR_DENSITY_MAX * area) / 1000000;
 	unsigned num_big_stars = min_big_stars + (min_big_stars == max_big_stars ? 0 : rand() % (max_big_stars - min_big_stars));
 
-	constexpr size_t MAX_FAILS = 0;
+	constexpr size_t MAX_FAILS = 20;
 	size_t fails = 0;
 
 	std::vector<point> big_stars = {};
 
 	while (num_big_stars != 0)
 	{
-		const uint32_t pos_rng = rand32() % (sky_src.area());
-		const int x = static_cast<int>(pos_rng % sky_src.w);
-		const int y = static_cast<int>(pos_rng / sky_src.w);
+		const uint32_t pos_rng = rand32() % (big_star_sky.area());
+		const int x = static_cast<int>(pos_rng % big_star_sky.w) + big_star_sky.x;
+		const int y = static_cast<int>(pos_rng / big_star_sky.w) + big_star_sky.y;
 
 		unsigned long min_dist2 = ~0ul;
 
@@ -204,21 +204,22 @@ void Renderer::RenderSky(bool force_render)
 			stars.blit
 			(
 				{
-					x + BIG_STAR_OFFSET.x,
-					y + BIG_STAR_OFFSET.y,
+					x + STAR_OFFSET.x,
+					y + STAR_OFFSET.y,
 					BIG_STAR_SRC.w,
 					BIG_STAR_SRC.h
 				},
 				BIG_STAR_SRC
 			);
+			big_stars.push_back({ x,y });
 		}
 		else if constexpr (MAX_FAILS > 0)
 		{
 			fails++;
 			if (fails < MAX_FAILS) continue;
-			fails = 0;
 		}
 
+		fails = 0;
 		num_big_stars--;
 	}
 

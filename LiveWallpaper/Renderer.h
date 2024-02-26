@@ -53,8 +53,7 @@ public:
 	};
 	static constexpr rect BIG_STAR_SRC = { 27, 0, 9, 9 }; // Where the big star is on the texture
 
-	static constexpr point SMALL_STAR_OFFSET = { -4, -4 }; // Offset from small star to upper left corner of sprite
-	static constexpr point BIG_STAR_OFFSET = { -2, -2 }; // Offset from big star to upper left corner of sprite
+	static constexpr point STAR_OFFSET = { -4, -4 }; // Offset from star to upper left corner of sprite
 
 	static constexpr std::array<unsigned, SMALL_STAR_NUM> SMALL_STAR_DENSITIES_MIN = { 40,  90, 140, 140, 40 }; // Minimum small stars per million pixels
 	static constexpr std::array<unsigned, SMALL_STAR_NUM> SMALL_STAR_DENSITIES_MAX = { 60, 110, 160, 160, 60 }; // Maximum small stars per million pixels
