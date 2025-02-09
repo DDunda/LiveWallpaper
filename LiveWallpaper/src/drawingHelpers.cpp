@@ -1,4 +1,4 @@
-#include "DrawingHelpers.h"
+#include "drawingHelpers.h"
 #include <stdexcept>
 
 point GetScreenSize()

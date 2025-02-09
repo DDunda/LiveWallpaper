@@ -1,4 +1,4 @@
-#include "Window.h"
+#include "window.h"
 
 LRESULT CALLBACK Window::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg)

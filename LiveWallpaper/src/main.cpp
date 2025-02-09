@@ -1,7 +1,7 @@
 #include <thread>
 
-#include "Window.h"
-#include "Renderer.h"
+#include "window.h"
+#include "renderer.h"
 
 // ID definitions for embedded resources
 #include "resource.h"

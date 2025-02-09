@@ -1,5 +1,5 @@
-#include "Visitors.h"
-#include "Renderer.h"
+#include "visitors.h"
+#include "renderer.h"
 
 // Controls blinking animations
 Blinker::Blinker() {
