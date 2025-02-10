@@ -96,23 +96,23 @@ struct rect
 		return *this;
 	}
 
-	constexpr rect operator+(const point& other) const { return { x + other.x, y + other.y, w, h }; }
-	constexpr rect operator-(const point& other) const { return { x - other.x, y - other.y, w, h }; }
-	constexpr rect& operator+=(const point& other)
+	constexpr rect operator+(const point& other) const noexcept { return { x + other.x, y + other.y, w, h }; }
+	constexpr rect operator-(const point& other) const noexcept { return { x - other.x, y - other.y, w, h }; }
+	constexpr rect& operator+=(const point& other) noexcept
 	{
 		x += other.x;
 		y += other.y;
 		return *this;
 	}
-	constexpr rect& operator-=(const point& other)
+	constexpr rect& operator-=(const point& other) noexcept
 	{
 		x -= other.x;
 		y -= other.y;
 		return *this;
 	}
 
-	constexpr rect operator+(const rect& other) const { return { x + other.x, y + other.y, w + other.w, h + other.h }; }
-	constexpr rect operator-(const rect& other) const { return { x - other.x, y - other.y, w - other.w, h - other.h }; }
+	constexpr rect operator+(const rect& other) const noexcept { return { x + other.x, y + other.y, w + other.w, h + other.h }; }
+	constexpr rect operator-(const rect& other) const noexcept { return { x - other.x, y - other.y, w - other.w, h - other.h }; }
 	constexpr rect& operator+=(const rect& other)
 	{
 		x += other.x;
@@ -121,7 +121,7 @@ struct rect
 		h += other.h;
 		return *this;
 	}
-	constexpr rect& operator-=(const rect& other)
+	constexpr rect& operator-=(const rect& other) noexcept
 	{
 		x -= other.x;
 		y -= other.y;
@@ -155,11 +155,24 @@ struct rect
 
 	constexpr int area() const noexcept { return w * h; }
 	constexpr int perimeter() const noexcept { return 2 * (w + h); }
+	constexpr bool isTouching(const rect& other) const noexcept
+	{
+		return x + w + 1 >= other.x && other.x + w + 1 >= x &&
+			y + h + 1 >= other.y && other.y + h + 1 >= y;
+	}
+	constexpr bool isIntersecting(const rect& other) const noexcept
+	{
+		return x + w >= other.x && other.x + w >= x &&
+			y + h >= other.y && other.y + h >= y;
+	}
+	constexpr bool isContaining(const rect& other) const noexcept
+	{
+		return x <= other.x && x + w >= other.x + other.w &&
+			y <= other.y && y + h >= other.y + other.h;
+	}
 };
 
 point GetScreenSize();
-
-rect GetScreenShape();
 
 class bitmap {
 public:

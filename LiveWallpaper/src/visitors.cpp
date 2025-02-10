@@ -1,5 +1,7 @@
 #include "visitors.h"
 #include "renderer.h"
+#include "resource.h"
+#include "globals.h"
 
 // Controls blinking animations
 Blinker::Blinker() {
@@ -384,7 +386,7 @@ void VisitorManager::Update(double delta)
 {
 	if (currentVisitor == NULL)
 	{
-		if (appearanceCountdown > 0 && !Window::forceVisitor)
+		if (appearanceCountdown > 0 && !forceVisitor)
 		{
 			appearanceCountdown -= delta;
 			return;
@@ -392,7 +394,7 @@ void VisitorManager::Update(double delta)
 
 		currentVisitor = visitors[rand() % VISITOR_COUNT];
 		currentVisitor->Spawn();
-		Window::forceVisitor = false;
+		forceVisitor = false;
 	}
 	else
 	{

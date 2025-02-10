@@ -24,17 +24,17 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
 // Bitmap
 //
 
-IDB_DRAGON              BITMAP                  "resources\\dragon.bmp"
+IDB_DRAGON              BITMAP                  "..\\resources\\dragon.bmp"
 
-IDB_BALROG              BITMAP                  "resources\\balrog.bmp"
+IDB_BALROG              BITMAP                  "..\\resources\\balrog.bmp"
 
-IDB_HELICOPTER          BITMAP                  "resources\\helicopter.bmp"
+IDB_HELICOPTER          BITMAP                  "..\\resources\\helicopter.bmp"
 
-IDB_MOON                BITMAP                  "resources\\moon.bmp"
+IDB_MOON                BITMAP                  "..\\resources\\moon.bmp"
 
-IDB_STARS               BITMAP                  "resources\\stars.bmp"
+IDB_STARS               BITMAP                  "..\\resources\\stars.bmp"
 
-IDB_CLOUDS              BITMAP                  "resources\\clouds.bmp"
+IDB_CLOUDS              BITMAP                  "..\\resources\\clouds.bmp"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -44,7 +44,7 @@ IDB_CLOUDS              BITMAP                  "resources\\clouds.bmp"
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON                ICON                    "resources\\icon.ico"
+IDI_ICON                ICON                    "..\\resources\\icon.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -75,6 +75,7 @@ BEGIN
     IDS_TOOLTIP             "Clouds Wallpaper"
     IDS_TOGGLE_DISABLED     "Allow visitors (Disabled)"
     IDS_TOGGLE_ENABLED      "Allow visitors (Enabled) "
+    IDS_WALLPAPER_CLASS     "wallpaper"
 END
 
 #endif    // English (United Kingdom) resources

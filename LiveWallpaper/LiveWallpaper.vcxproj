@@ -138,16 +138,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\drawingHelpers.h" />
+    <ClInclude Include="include\globals.h" />
     <ClInclude Include="include\renderer.h" />
     <ClInclude Include="include\resource.h" />
     <ClInclude Include="include\visitors.h" />
     <ClInclude Include="include\window.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="resources\resource.rc" />
+    <ResourceCompile Include="include\resource.rc" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\drawingHelpers.cpp" />
+    <ClCompile Include="src\globals.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\renderer.cpp" />
     <ClCompile Include="src\visitors.cpp" />
@@ -164,6 +166,6 @@
     <Image Include="resources\stars.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-    <ImportGroup Label="ExtensionTargets">
+  <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

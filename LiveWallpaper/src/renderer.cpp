@@ -1,4 +1,6 @@
 #include "renderer.h"
+#include "resource.h"
+#include "globals.h"
 #include <vector>
 
 Cloud::Cloud() {}
@@ -227,7 +229,7 @@ void Renderer::RenderSky(bool force_render)
 
 Renderer::Renderer(HDC wDC)
 {
-	resolution = GetScreenSize();
+	resolution = GetVirtualScreenSize();
 
 	using namespace std::chrono;
 
@@ -335,7 +337,11 @@ void Renderer::HandleTime()
 
 void Renderer::RenderLoop()
 {
-	while (Window::running)
+	std::shared_lock<std::shared_mutex> lck(isRunning_mtx);
+
+	isRunningChanged.wait(lck, []{ return isRunning; });
+
+	while (true)
 	{
 		// Moves clouds left
 		for (auto& cloud : clouds) cloud.Update(delta);
@@ -361,7 +367,7 @@ void Renderer::RenderLoop()
 		for (auto& cloud : clouds) cloud.Render(*cloud_bmp);
 
 		// Draw visitors
-		if (Window::visitorsToggled)
+		if (visitorsToggled)
 		{
 			visitors->Update(delta);
 			visitors->Render();
@@ -382,6 +388,10 @@ void Renderer::RenderLoop()
 
 		// Keep track of time to do animations
 		HandleTime();
+
+		lck.unlock(); // Unlock between loops to allow the running state to change
+		lck.lock();
+		if (!isRunning) return;
 	}
 }
 
