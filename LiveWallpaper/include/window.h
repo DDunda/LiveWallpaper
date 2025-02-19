@@ -11,7 +11,7 @@ struct WindowClass
 	WNDCLASSEX _wcex;
 	ATOM _class_atom;
 
-	WindowClass(LPCTSTR menu_name, LPCTSTR class_name, WNDPROC window_procedure, UINT style = CS_HREDRAW | CS_VREDRAW);
+	WindowClass(LPCTSTR menu_name, LPCTSTR class_name, WNDPROC window_procedure, UINT style = CS_HREDRAW | CS_VREDRAW, HBRUSH background = (HBRUSH)(COLOR_WINDOW + 1));
 	~WindowClass();
 };
 
@@ -23,7 +23,7 @@ struct Window
 	HWND hwnd;
 	bool running = false;
 
-	Window(ATOM class_atom, LPCTSTR title_name, int x, int y, int w, int h, HWND parent = NULL, DWORD style = WS_OVERLAPPEDWINDOW);
+	Window(ATOM class_atom, LPCTSTR title_name, int x, int y, int w, int h, HWND parent = NULL, DWORD style = WS_OVERLAPPEDWINDOW, DWORD ex_style = 0);
 
 	// Destroys the window
 	~Window();

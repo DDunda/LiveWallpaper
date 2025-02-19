@@ -22,7 +22,7 @@ const UINT WM_SPAWN_WORKERW = 0x052C;
 // https://www.codeproject.com/Articles/856020/Draw-Behind-Desktop-Icons-in-Windows-plus
 HWND GetWorkerW()
 {
-	HWND progman_hwnd = FindWindow(TEXT("Progman"), NULL);
+	HWND progman_hwnd = GetShellWindow();
 
 	if (progman_hwnd == 0) ExitWithMessage(TEXT("Critical error: Could not locate Progman"));
 
@@ -113,9 +113,14 @@ void ShowContextMenu(HWND hwnd, point pt)
 }
 
 // You can't give renderer.Renderloop directly to a thread
-void SpawnRenderer(HDC windowDC)
+void SpawnRenderer(HWND window)
 {
-	Renderer renderer(windowDC);
+	std::shared_lock<std::shared_mutex> lck(isRunning_mtx);
+
+	isRunningChanged.wait(lck, [] { return isRunning; });
+	lck.unlock();
+
+	Renderer renderer(window);
 
 	renderer.RenderLoop();
 }
@@ -176,11 +181,9 @@ void SpawnMainWindow(HWND workerw_window)
 	LoadString(hInstance, IDS_WALLPAPER_CLASS, class_name, ARRAYSIZE(class_name));
 	LoadString(hInstance, IDS_TITLE, title_name, ARRAYSIZE(title_name));
 
-	WindowClass wClass(menu_name, class_name, MainWinProc, CS_HREDRAW | CS_VREDRAW);
+	WindowClass wClass(menu_name, class_name, MainWinProc, CS_HREDRAW | CS_VREDRAW, (HBRUSH)(COLOR_BACKGROUND + 1));
 
-	RECT ww_shape;
-
-	GetWindowRect(workerw_window, &ww_shape);
+	point size = GetScreenSize();
 
 	try
 	{
@@ -189,10 +192,11 @@ void SpawnMainWindow(HWND workerw_window)
 			title_name,
 			0,
 			0,
-			ww_shape.right - ww_shape.left,
-			ww_shape.bottom - ww_shape.top,
+			size.x,
+			size.y,
 			workerw_window,
-			WS_POPUP | WS_DISABLED | WS_CHILD
+			WS_CHILD,
+			WS_EX_NOPARENTNOTIFY | WS_EX_NOACTIVATE
 		);
 
 		SetParent(mainWindow->hwnd, workerw_window);
@@ -235,20 +239,7 @@ int WINAPI wWinMain(HINSTANCE _hInstance, HINSTANCE, PWSTR, int)
 		isRunningChanged.wait(lck, [] { return isRunning; });
 	}
 
-	// WorkerW style: 0x58000000
-	// 0x08000000: WS_DISABLED
-	// 0x10000000: WS_VISIBLE
-	// 0x40000000: WS_CHILD
-
-	// Main window style: 0x9C000000
-	// 0x04000000: WS_CLIPSIBLINGS
-	// 0x08000000: WS_DISABLED
-	// 0x10000000: WS_VISIBLE
-	// 0x80000000: WS_POPUP
-
-	HDC windowDC = GetDCEx(mainWindow->hwnd, NULL, DCX_LOCKWINDOWUPDATE | DCX_CACHE | DCX_WINDOW); // flags == 0x403
-
-	std::thread renderThread(SpawnRenderer, windowDC);
+	std::thread renderThread(SpawnRenderer, mainWindow->hwnd);
 
 	// Wait for renderer and window to stop running
 	mainWindowThread.join();

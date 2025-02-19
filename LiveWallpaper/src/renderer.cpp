@@ -227,9 +227,9 @@ void Renderer::RenderSky(bool force_render)
 
 }
 
-Renderer::Renderer(HDC wDC)
+Renderer::Renderer(HWND window)
 {
-	resolution = GetVirtualScreenSize();
+	resolution = GetScreenSize();
 
 	using namespace std::chrono;
 
@@ -241,7 +241,8 @@ Renderer::Renderer(HDC wDC)
 		REFERENCE_SIZE.y
 	};
 
-	worker_dc = wDC;
+	worker_hwnd = window;
+	worker_dc = GetDCEx(window, NULL, DCX_LOCKWINDOWUPDATE | DCX_CACHE | DCX_WINDOW); // flags == 0x403
 
 	render_dc = CreateCompatibleDC(worker_dc);
 	render_buffer = CreateCompatibleBitmap
@@ -309,7 +310,8 @@ Renderer::~Renderer()
 		render_dc = nullptr;
 	}
 
-	DeleteDC(worker_dc);
+	DeleteDC(render_dc);
+	ReleaseDC(worker_hwnd, worker_dc);
 }
 
 void Renderer::HandleTime()
@@ -337,12 +339,13 @@ void Renderer::HandleTime()
 
 void Renderer::RenderLoop()
 {
-	std::shared_lock<std::shared_mutex> lck(isRunning_mtx);
-
-	isRunningChanged.wait(lck, []{ return isRunning; });
+	std::shared_lock<std::shared_mutex> lck(isRunning_mtx, std::defer_lock);
 
 	while (true)
 	{
+		lck.lock();
+		if (!isRunning) return;
+
 		// Moves clouds left
 		for (auto& cloud : clouds) cloud.Update(delta);
 
@@ -390,8 +393,6 @@ void Renderer::RenderLoop()
 		HandleTime();
 
 		lck.unlock(); // Unlock between loops to allow the running state to change
-		lck.lock();
-		if (!isRunning) return;
 	}
 }
 

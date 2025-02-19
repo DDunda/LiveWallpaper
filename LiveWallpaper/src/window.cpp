@@ -2,7 +2,7 @@
 #include "globals.h"
 #include"resource.h"
 
-WindowClass::WindowClass(LPCTSTR menu_name, LPCTSTR class_name, WNDPROC window_procedure, UINT style)
+WindowClass::WindowClass(LPCTSTR menu_name, LPCTSTR class_name, WNDPROC window_procedure, UINT style, HBRUSH background)
 {
 	_wcex = {};
 
@@ -12,7 +12,7 @@ WindowClass::WindowClass(LPCTSTR menu_name, LPCTSTR class_name, WNDPROC window_p
 	_wcex.hInstance     = hInstance;
 	_wcex.hIcon         = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON));
 	_wcex.hCursor       = LoadCursor(NULL, IDC_ARROW);
-	_wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	_wcex.hbrBackground = background;
 	_wcex.lpszMenuName  = menu_name;
 	_wcex.lpszClassName = class_name;
 
@@ -26,10 +26,10 @@ WindowClass::~WindowClass()
 	UnregisterClass(MAKEINTATOM(_class_atom), hInstance);
 }
 
-Window::Window(ATOM class_atom, LPCTSTR title_name, int x, int y, int w, int h, HWND parent, DWORD style)
+Window::Window(ATOM class_atom, LPCTSTR title_name, int x, int y, int w, int h, HWND parent, DWORD style, DWORD ex_style)
 {
 	hwnd = CreateWindowEx(
-		0, // DWORD dwExStyle
+		ex_style, // DWORD dwExStyle
 		MAKEINTATOM(class_atom), // LPCWSTR lpClassName
 		title_name, // LPCWSTR lpWindowName
 		style, // DWORD dwStyle

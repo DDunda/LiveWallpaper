@@ -109,6 +109,7 @@ public:
 
 	// Magical DC
 	HDC worker_dc;
+	HWND worker_hwnd;
 
 	HBITMAP render_buffer;
 	HDC render_dc;
@@ -118,7 +119,7 @@ public:
 
 	void RenderSky(bool force_render = false);
 
-	Renderer(HDC worker_dc);
+	Renderer(HWND window);
 
 	~Renderer();
 
